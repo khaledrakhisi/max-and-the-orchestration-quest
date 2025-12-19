@@ -1,101 +1,69 @@
 from typing import List, Optional
-from motor.motor_asyncio import AsyncIOMotorClient, AsyncIOMotorDatabase
+from pymongo import MongoClient
 from bson import ObjectId
 from models.user import User, Badge
 
+
 class UserRepository:
-    def __init__(self, db: AsyncIOMotorDatabase):
-        """
-        Initialize the repository with a database connection.
-        
-        Args:
-            db: AsyncIOMotorDatabase instance
-        """
-        self.collection = db["users"]
-    
-    async def get_all(self) -> List[User]:
-        users = []
-        cursor = self.collection.find({})
-        async for document in cursor:
-            users.append(User(**document))
-        return users
-    
-    async def get_by_id(self, user_id: str) -> Optional[User]:
-        try:
-            document = await self.collection.find_one({"_id": ObjectId(user_id)})
-            if document:
-                return User(**document)
-            return None
-        except Exception:
-            return None
-    
-    async def get_by_username(self, username: str) -> Optional[User]:
-        document = await self.collection.find_one({"username": username})
-        if document:
-            return User(**document)
-        return None
-    
-    async def insert(self, user: User) -> str:
-        user_dict = user.model_dump(by_alias=True, exclude=["id"])
-        result = await self.collection.insert_one(user_dict)
-        return str(result.inserted_id)
-    
-    async def add_badge(self, user_id: str, badge: Badge) -> bool:
-        try:
-            badge_dict = badge.model_dump()
-            result = await self.collection.update_one(
-                {"_id": ObjectId(user_id)},
-                {"$push": {"badges": badge_dict}}
-            )
-            return result.modified_count > 0
-        except Exception:
-            return False
-    
-    async def add_xp(self, user_id: str, xp_amount: int) -> bool:
-        try:
-            # Get current user to calculate new level
-            user = await self.get_by_id(user_id)
-            if not user:
-                return False
-            
-            new_total_xp = user.totalXP + xp_amount
-            # Simple level calculation: level = 1 + (totalXP // 100)
-            new_level = 1 + (new_total_xp // 100)
-            
-            result = await self.collection.update_one(
-                {"_id": ObjectId(user_id)},
-                {
-                    "$inc": {"totalXP": xp_amount},
-                    "$set": {"level": new_level}
-                }
-            )
-            return result.modified_count > 0
-        except Exception:
-            return False
-    
-    async def change_password(self, user_id: str, new_password: str) -> bool:
-        try:
-            result = await self.collection.update_one(
-                {"_id": ObjectId(user_id)},
-                {"$set": {"password": new_password}}
-            )
-            return result.modified_count > 0
-        except Exception:
-            return False
+    def __init__(self, mongo_uri: str, db_name: str):
+        self.client = MongoClient(mongo_uri)
+        self.db = self.client[db_name]
+        self.collection = self.db["users"]
 
+    # -------------------------
+    # READ
+    # -------------------------
 
-# Example usage:
-"""
-from motor.motor_asyncio import AsyncIOMotorClient
+    def get_all(self) -> List[User]:
+        users = self.collection.find()
+        return [User(**user) for user in users]
 
-# Create database connection
-client = AsyncIOMotorClient("mongodb://localhost:27017")
-db = client["your_database_name"]
+    def get_by_id(self, user_id: str) -> Optional[User]:
+        user = self.collection.find_one({"_id": ObjectId(user_id)})
+        return User(**user) if user else None
 
-# Initialize repository
-user_repo = UserRepository(db)
+    def get_by_username(self, username: str) -> Optional[User]:
+        user = self.collection.find_one({"username": username})
+        return User(**user) if user else None
 
-# Use the repository
-user = await user_repo.get_by_username("john_doe")
-success = await user_repo.add_xp(user.id, 50)
-"""
+    # -------------------------
+    # CREATE
+    # -------------------------
+
+    def insert(self, user: User) -> User:
+        user_dict = user.model_dump(by_alias=True, exclude={"id"})
+        result = self.collection.insert_one(user_dict)
+        user.id = str(result.inserted_id)
+        return user
+
+    # -------------------------
+    # UPDATE
+    # -------------------------
+
+    def add_badge(self, user_id: str, badge: Badge) -> bool:
+        result = self.collection.update_one(
+            {"_id": ObjectId(user_id)},
+            {"$push": {"badges": badge.model_dump()}}
+        )
+        return result.modified_count == 1
+
+    def add_xp(self, user_id: str, xp: int) -> bool:
+        result = self.collection.update_one(
+            {"_id": ObjectId(user_id)},
+            {
+                "$inc": {"totalXP": xp},
+                "$set": {"level": self._calculate_level(xp)}
+            }
+        )
+        return result.modified_count == 1
+
+    def change_password(self, user_id: str, new_password: str) -> bool:
+        result = self.collection.update_one(
+            {"_id": ObjectId(user_id)},
+            {"$set": {"password": new_password}}
+        )
+        return result.modified_count == 1
+
+    def _calculate_level(self, xp: int) -> int:
+        # Example leveling logic
+        return max(1, xp // 1000)
