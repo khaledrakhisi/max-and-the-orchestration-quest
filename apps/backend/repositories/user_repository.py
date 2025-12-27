@@ -26,6 +26,10 @@ class UserRepository:
         user = self.collection.find_one({"username": username})
         return User(**user) if user else None
 
+    def get_by_email(self, email: str) -> Optional[User]:
+        user = self.collection.find_one({"email": email})
+        return User(**user) if user else None
+
     # -------------------------
     # CREATE
     # -------------------------
