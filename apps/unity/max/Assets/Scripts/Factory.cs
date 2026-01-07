@@ -13,6 +13,7 @@ public class Factory : MonoBehaviour
     public Rotate2D gear2;
     public Smoke smoke;
     public AutoMovingwalkway conveyBelt;
+    public MoveToPoint fence;
 
     // Start is called once before the first execution of Update after the MonoBehaviour is created
     void Start()
@@ -52,7 +53,7 @@ public class Factory : MonoBehaviour
             if (conveyBelt)
             {
                 conveyBelt.isOn = true;
-                conveyBelt.speed = new Vector2(-1.5f, 0f);
+                conveyBelt.targetSpeed = new Vector2(-1.5f, 0f);
             }
         }
         else if (state == States.Output)
@@ -73,7 +74,7 @@ public class Factory : MonoBehaviour
             if (conveyBelt)
             {
                 conveyBelt.isOn = true;
-                conveyBelt.speed = new Vector2(1.5f, 0f);
+                conveyBelt.targetSpeed = new Vector2(1.5f, 0f);
             }
         }
     }
