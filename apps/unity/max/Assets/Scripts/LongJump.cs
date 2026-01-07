@@ -15,11 +15,10 @@ public class LongJump : Jump {
 
 		#if UNITY_STANDALONE || UNITY_WEBPLAYER
 			var jumpButton = inputState.GetButtonValue (inputButtons [0]);
-			var holdTime = inputState.GetButtonHoldTime(inputButtons[0]);
+			holdTime = inputState.GetButtonHoldTime(inputButtons[0]);
 		#elif UNITY_ANDROID || UNITY_IOS
 		if(!isManual)
 			jumpButtonPressed = CrossPlatformInputManager.GetButton("Jump");
-			Debug.Log("herere----", jumpButtonPressed);
 			if(jumpButtonPressed){
 				holdTime += Time.deltaTime;
 			}else{
@@ -29,12 +28,11 @@ public class LongJump : Jump {
 
 		//Debug.Log (holdTime);
 
-		if (!jumpButtonPressed)
-			canLongJump = false;
+		// if (!jumpButtonPressed)
+		// 	canLongJump = false;
 
 		if (collisionState.standing && isLongJumping) {
 			isLongJumping = false;
-
 			jumpButtonPressed = false;
 			isManual = false;
 		}

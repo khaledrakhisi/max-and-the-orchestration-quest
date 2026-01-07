@@ -1,0 +1,74 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>WebSocket Docker Client</title>
+    <style>
+        body { font-family: Arial, sans-serif; background: #111; color: #eee; padding: 20px; }
+        button { margin: 5px; padding: 10px; background: #444; color: white; border: none; cursor: pointer; }
+        button:hover { background: #666; }
+        #log { margin-top: 20px; background: #000; padding: 10px; border: 1px solid #333; height: 400px; overflow-y: auto; }
+        #log2 { margin-top: 2px; background: #000; padding: 10px; border: 1px solid #333; height: 40px; overflow-y: auto; }
+
+    </style>
+</head>
+<body>
+
+    <h1>WebSocket Client</h1>
+
+    <button onclick="sendMsg('get_time')">Get Time</button>
+    <button onclick="sendMsg('pull_image:alpine')">Pull Alpine</button>
+    <button onclick="sendMsg('list_images')">List Images</button>
+    <button onclick="sendMsg('list_containers')">List Containers</button>
+    <button onclick="sendMsg('remove_image:alpine')">Remove Alpine</button>
+    <button onclick="sendMsg('create_container:uzyexe/tetris')">create tetris container</button>
+    <button onclick="sendMsg('start_container:tetris_container')">start tetris container</button>
+    <button onclick="sendMsg('stats:a40f')">show stats portainer container</button>
+    <button onclick="sendMsg('stats:73c')">show stats kali container</button>
+    <button onclick="sendMsg('stop_container:tetris_container')">stop tetris container</button>
+    <button onclick="sendMsg('stats:tetris_container')">show stats tetris container</button>
+
+
+
+    <div id="log2"></div>
+    <div id="log"></div>
+
+
+    <script>
+        const log2 = msg => {
+            const div = document.getElementById("log2");
+            div.innerHTML += msg + "<br>";
+            div.scrollTop = div.scrollHeight;
+        };
+
+        const log = msg => {
+    const div = document.getElementById("log");
+
+    // If it's an array of objects, format it nicely
+    var data = JSON.parse(msg)
+    console.log(data)
+    if (Array.isArray(data) && data.every(item => typeof item === "object")) {
+        data = `<pre>${JSON.stringify(data, null, 2)}</pre>`;
+    }else if(typeof data === "object"){
+      data = `<pre>${JSON.stringify(data, null, 2)}</pre>`
+    }
+
+    div.innerHTML += data + "<br>";
+    div.scrollTop = div.scrollHeight;
+};
+
+        const ws = new WebSocket("ws://localhost:8765");
+
+        ws.onopen = () => log2("🟢 Connected to WebSocket.");
+        ws.onclose = () => log2("🔴 Disconnected from server.");
+        ws.onerror = err => log2("⚠️ WebSocket Error: " + err);
+        ws.onmessage = msg => log(msg.data);
+
+        function sendMsg(cmd) {
+            log2("📤 Sent: " + cmd);
+            ws.send(cmd);
+        }
+    </script>
+
+</body>
+</html>

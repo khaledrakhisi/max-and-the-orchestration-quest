@@ -1,7 +1,8 @@
 ﻿using UnityEngine;
 using System.Collections;
 
-public class ObjectSpawner : MonoBehaviour {
+public class ObjectSpawner : MonoBehaviour
+{
 
 	public GameObject[] prefabs;
 
@@ -13,40 +14,50 @@ public class ObjectSpawner : MonoBehaviour {
 
 	private bool running;
 	// Use this for initialization
-	void Start () {
-//		ResetDelay ();
-//		StartCoroutine (EnemyGenerator ());
+	void Start()
+	{
+		//		ResetDelay ();
+		//		StartCoroutine (EnemyGenerator ());
 	}
 
-	void FixedUpdate(){
-		
-		if (isOn && !running) {
+	void FixedUpdate()
+	{
+
+		if (isOn && !running)
+		{
 			running = true;
-			ResetDelay ();
-			StartCoroutine (MethodToIterate ());
-		} else {
+			ResetDelay();
+			StartCoroutine(MethodToIterate());
+		}
+		else
+		{
 		}
 	}
 
-	IEnumerator MethodToIterate(){
+	IEnumerator MethodToIterate()
+	{
 
-		yield return new WaitForSeconds (delay);
+		yield return new WaitForSeconds(delay);
 
-//		if (isOn) {
-			var newTransform = transform;
+		//		if (isOn) {
+		var newTransform = transform;
+		Instantiate(prefabs[Random.Range(0, prefabs.Length)], newTransform.position, Quaternion.Euler(0f, 0f, rotationZ));
+		ResetDelay();
 
-		Instantiate (prefabs [Random.Range (0, prefabs.Length)], newTransform.position, Quaternion.Euler(0f, 0f, rotationZ));
-			ResetDelay ();
-		
-//		}
-//			StartCoroutine (EnemyGenerator ());
+		//		}
+		//			StartCoroutine (EnemyGenerator ());
 		running = false;
 	}
 
-	void ResetDelay(){
-		delay = Random.Range (delayRange.x, delayRange.y);
-		rotationZ = Random.Range (rotationZRange.x, rotationZRange.y);
+	void ResetDelay()
+	{
+		delay = Random.Range(delayRange.x, delayRange.y);
+		rotationZ = Random.Range(rotationZRange.x, rotationZRange.y);
 	}
 
-
+	public void DoSpawn()
+	{
+		var newTransform = transform;
+		Instantiate(prefabs[Random.Range(0, prefabs.Length)], newTransform.position, Quaternion.Euler(0f, 0f, rotationZ));
+	}
 }

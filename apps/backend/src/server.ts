@@ -5,6 +5,7 @@ dotenv.config();
 import express, { Request, Response } from "express";
 import * as http from "http";
 import { Server as SocketIoServer, Socket } from "socket.io";
+import Docker from "dockerode";
 
 const app = express();
 const server = http.createServer(app);
@@ -67,7 +68,7 @@ app.post(
 );
 
 app.get("/", (req: Request, res: Response) => {
-  res.send("MaxPi Orchestration Backend Running.");
+  res.send("max and Orchestration Backend Running.");
 });
 
 // --- 4. Start Server ---
@@ -75,3 +76,34 @@ server.listen(PORT, () => {
   console.log(`Server listening on port ${PORT}`);
   console.log(`Node.js environment: ${process.env.NODE_ENV || "development"}`);
 });
+
+const docker = new Docker(); // Defaults to /var/run/docker.sock or equivalent
+async function pullImage() {
+  console.log("Pulling nginx:latest...");
+
+  try {
+    // dockerode returns a stream for the pull progress
+    await new Promise((resolve, reject) => {
+      docker.pull("nginx:latest", (err: any, stream: any) => {
+        if (err) return reject(err);
+
+        // You must follow the stream to ensure the pull completes
+        docker.modem.followProgress(stream, onFinished, onProgress);
+
+        function onFinished(err: any, output: any) {
+          if (err) return reject(err);
+          resolve(output);
+        }
+
+        function onProgress(event: any) {
+          // Optional: Log download progress
+          if (event.status) console.log(event.status);
+        }
+      });
+    });
+
+    console.log("Successfully pulled nginx!");
+  } catch (error) {
+    console.error("Failed to pull image:", error);
+  }
+}

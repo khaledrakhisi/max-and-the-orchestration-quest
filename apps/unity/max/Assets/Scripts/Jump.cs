@@ -43,7 +43,7 @@ public class Jump : AbstractBehavior {
 			
 			if (isKneeingBeforeJump) {
 				timeElapsed += Time.deltaTime;
-				if (timeElapsed >= .2f || inputState.absVelX != 0) {
+				if (timeElapsed >= .3f || inputState.absVelX != 0) {
 					OnJump ();
 					timeElapsed = 0f;
 				}
