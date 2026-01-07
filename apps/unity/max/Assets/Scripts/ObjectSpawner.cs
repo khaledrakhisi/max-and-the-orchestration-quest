@@ -60,6 +60,4 @@ public class ObjectSpawner : MonoBehaviour
 		var newTransform = transform;
 		Instantiate(prefabs[Random.Range(0, prefabs.Length)], newTransform.position, Quaternion.Euler(0f, 0f, rotationZ));
 	}
-
-
 }
