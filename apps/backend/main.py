@@ -6,6 +6,7 @@ from datetime import timedelta
 from repositories.user_repository import UserRepository
 from domain.authentication import hash_password, verify_password, create_access_token, normalize_password
 from models.user import User
+from bson.errors import InvalidId
 import os
 
 
@@ -59,6 +60,22 @@ class UserResponse(BaseModel):
     email: str
     totalXP: int
     level: int
+
+
+class UserCreateRequest(BaseModel):
+    username: str = Field(..., min_length=3, max_length=50)
+    email: EmailStr
+    password: str = Field(..., min_length=8, max_length=100)
+    totalXP: int = 0
+    level: int = 1
+
+
+class UserUpdateRequest(BaseModel):
+    username: str | None = Field(default=None, min_length=3, max_length=50)
+    email: EmailStr | None = None
+    password: str | None = Field(default=None, min_length=8, max_length=100)
+    totalXP: int | None = None
+    level: int | None = None
 
 
 @app.get("/")
@@ -176,10 +193,118 @@ async def login(request: LoginRequest):
     }
 
 
-def main():
-    """Test function to verify database connection"""
+@app.get("/users", response_model=list[UserResponse])
+async def list_users():
     users = user_repo.get_all()
-    print(f"Found {len(users)} users")
+    return [
+        {
+            "id": str(user.id),
+            "username": user.username,
+            "email": user.email,
+            "totalXP": user.totalXP,
+            "level": user.level,
+        }
+        for user in users
+    ]
+
+
+@app.get("/users/{user_id}", response_model=UserResponse)
+async def get_user(user_id: str):
+    try:
+        user = user_repo.get_by_id(user_id)
+    except InvalidId:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Invalid user id")
+
+    if not user:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="User not found")
+
+    return {
+        "id": str(user.id),
+        "username": user.username,
+        "email": user.email,
+        "totalXP": user.totalXP,
+        "level": user.level,
+    }
+
+
+@app.post("/users", response_model=UserResponse, status_code=status.HTTP_201_CREATED)
+async def create_user(request: UserCreateRequest):
+    existing_username = user_repo.get_by_username(request.username)
+    if existing_username:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Username already registered")
+
+    existing_email = user_repo.get_by_email(request.email)
+    if existing_email:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Email already registered")
+
+    normalized_password = normalize_password(request.password)
+    hashed_password = hash_password(normalized_password)
+
+    new_user = User(
+        username=request.username,
+        email=request.email,
+        password=hashed_password,
+        totalXP=request.totalXP,
+        level=request.level,
+    )
+
+    created_user = user_repo.insert(new_user)
+
+    return {
+        "id": str(created_user.id),
+        "username": created_user.username,
+        "email": created_user.email,
+        "totalXP": created_user.totalXP,
+        "level": created_user.level,
+    }
+
+
+@app.patch("/users/{user_id}", response_model=UserResponse)
+async def update_user(user_id: str, request: UserUpdateRequest):
+    updates = request.model_dump(exclude_unset=True)
+
+    if "username" in updates:
+        existing_username = user_repo.get_by_username(updates["username"])
+        if existing_username and str(existing_username.id) != user_id:
+            raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Username already registered")
+
+    if "email" in updates:
+        existing_email = user_repo.get_by_email(updates["email"])
+        if existing_email and str(existing_email.id) != user_id:
+            raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Email already registered")
+
+    if "password" in updates:
+        normalized_password = normalize_password(updates["password"])
+        updates["password"] = hash_password(normalized_password)
+
+    try:
+        updated_user = user_repo.update_user(user_id, updates)
+    except InvalidId:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Invalid user id")
+
+    if not updated_user:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="User not found")
+
+    return {
+        "id": str(updated_user.id),
+        "username": updated_user.username,
+        "email": updated_user.email,
+        "totalXP": updated_user.totalXP,
+        "level": updated_user.level,
+    }
+
+
+@app.delete("/users/{user_id}", status_code=status.HTTP_204_NO_CONTENT)
+async def delete_user(user_id: str):
+    try:
+        deleted = user_repo.delete_by_id(user_id)
+    except InvalidId:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Invalid user id")
+
+    if not deleted:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="User not found")
+
+    return None
 
 
 if __name__ == "__main__":

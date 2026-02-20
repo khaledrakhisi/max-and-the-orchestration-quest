@@ -1,5 +1,5 @@
-from typing import List, Optional
-from pymongo import MongoClient
+from typing import List, Optional, Dict, Any
+from pymongo import MongoClient, ReturnDocument
 from bson import ObjectId
 from models.user import User, Badge
 
@@ -71,3 +71,21 @@ class UserRepository:
     def _calculate_level(self, xp: int) -> int:
         # Example leveling logic
         return max(1, xp // 1000)
+
+    def update_user(self, user_id: str, updates: Dict[str, Any]) -> Optional[User]:
+        if not updates:
+            return self.get_by_id(user_id)
+
+        if "totalXP" in updates and "level" not in updates:
+            updates["level"] = self._calculate_level(updates["totalXP"])
+
+        updated = self.collection.find_one_and_update(
+            {"_id": ObjectId(user_id)},
+            {"$set": updates},
+            return_document=ReturnDocument.AFTER
+        )
+        return User(**updated) if updated else None
+
+    def delete_by_id(self, user_id: str) -> bool:
+        result = self.collection.delete_one({"_id": ObjectId(user_id)})
+        return result.deleted_count == 1
