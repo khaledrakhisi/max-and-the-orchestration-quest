@@ -2,17 +2,21 @@
 using System.Collections;
 using System.Collections.Generic;
 
-public class ButtonState{
+public class ButtonState
+{
 	public bool value;
 	public float holdTime = 0;
+	public bool justPressed = false;
 }
 
-public enum Directions{
+public enum Directions
+{
 	Right = 1,
 	Left = -1
 }
 
-public class InputState : MonoBehaviour {
+public class InputState : MonoBehaviour
+{
 
 	public bool inputEnabled = true;
 	public float zeroNumber = .02f;
@@ -25,63 +29,99 @@ public class InputState : MonoBehaviour {
 	private Rigidbody2D body2d;
 	private Dictionary<Buttons, ButtonState> buttonStates = new Dictionary<Buttons, ButtonState>();
 
-	void Awake(){
-		body2d = GetComponent<Rigidbody2D> ();
+	void Awake()
+	{
+		body2d = GetComponent<Rigidbody2D>();
 	}
 
-	void FixedUpdate(){
+	void FixedUpdate()
+	{
 		absVelX = body2d.linearVelocity.x;
 		absVelY = body2d.linearVelocity.y;
 
-		try {
-			var mobileInput = GameObject.Find ("MobileSingleStickControl");
-			var canvas = mobileInput.GetComponent<Canvas> ();
+		try
+		{
+			var mobileInput = GameObject.Find("MobileSingleStickControl");
+			var canvas = mobileInput.GetComponent<Canvas>();
 			canvas.enabled = inputEnabled;
 
-		} catch {
+		}
+		catch
+		{
 		}
 	}
 
-	public void SetButtonValue(Buttons key, bool value){
-		if(!buttonStates.ContainsKey(key))
+	public void SetButtonValue(Buttons key, bool value)
+	{
+		if (!buttonStates.ContainsKey(key))
 			buttonStates.Add(key, new ButtonState());
 
-		var state = buttonStates [key];
+		var state = buttonStates[key];
 
-		if (state.value && !value) {
-			state.holdTime = 0;
-		} else if (state.value && value) {
-			state.holdTime += Time.deltaTime;
+		// 1. Check for "Just Pressed" (Was false, now true)
+		if (state.value && !value)
+		{
+			state.justPressed = true;
+			state.holdTime = 0;// Reset hold time on fresh press
 		}
+		else
+		{
+			state.justPressed = false;// Reset immediately after the first frame
 
+			// Handle hold time logic
+			if (state.value && value)
+			{
+				state.holdTime += Time.deltaTime;
+			}
+			else if (state.value && !value)
+			{
+				state.holdTime = 0;
+			}
+		}
 		state.value = value;
-
 	}
 
-	public bool GetButtonValue(Buttons key){
+	public bool GetButtonDown(Buttons key)
+	{
 		if (!inputEnabled)
 			return false;
 
-		if (buttonStates.ContainsKey (key))
-			return buttonStates [key].value;
+		if (buttonStates.ContainsKey(key))
+			return buttonStates[key].justPressed;
 		else
 			return false;
 	}
 
-	public float GetButtonHoldTime(Buttons key){
+	public bool GetButtonValue(Buttons key)
+	{
+		if (!inputEnabled)
+			return false;
+
+		if (buttonStates.ContainsKey(key))
+			return buttonStates[key].value;
+		else
+			return false;
+	}
+
+	public float GetButtonHoldTime(Buttons key)
+	{
 		if (!inputEnabled)
 			return 0;
 
-		if (buttonStates.ContainsKey (key))
-			return buttonStates [key].holdTime;
+		if (buttonStates.ContainsKey(key))
+			return buttonStates[key].holdTime;
 		else
 			return 0;
 	}
-		
-	public void DoReverseDirection(){
-		if (direction == Directions.Left) {
+
+	public void DoReverseDirection()
+	{
+		if (direction == Directions.Left)
+		{
 			direction = Directions.Right;
-		} else {
+		}
+		else
+		{
 			direction = Directions.Left;
 		}
 	}

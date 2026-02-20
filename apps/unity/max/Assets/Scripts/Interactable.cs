@@ -45,7 +45,7 @@ public class Interactable : MonoBehaviour
 		if (target)
 		{
 
-			if (target.GetComponent<PlayerInteraction>().interacted && !interacted)
+			if (target.GetComponent<PlayerInteraction>().justInteracted && !interacted)
 			{
 				interacted = true;
 				if (interactSound)
