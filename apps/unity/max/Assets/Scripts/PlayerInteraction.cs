@@ -6,6 +6,7 @@ using UnityStandardAssets.CrossPlatformInput;
 public class PlayerInteraction : AbstractBehavior {
 
 	public bool interacted = false;
+	public bool web_socket_button = false;
 	float holdTime = 0f;
 
 	void Update(){
@@ -28,10 +29,21 @@ public class PlayerInteraction : AbstractBehavior {
 		//if ((buttonPressed && holdTime < .0099f)) {
 		if(buttonPressed){
 			interacted = true;
+			// Debug.Log(interacted);
 		} else if(!buttonPressed){
 			//Debug.Log ("false");
 			interacted = false;
 			holdTime = 0f;
 		}
+
+		// if(buttonPressed){
+		// 	Debug.Log(holdTime);
+		// }
+		// if((buttonPressed && holdTime < 0.099f)){
+		// 	web_socket_button = true;
+		// }else if(!buttonPressed){
+		// 	web_socket_button = false;
+		// 	holdTime = 0f;
+		// }
 	}
 }

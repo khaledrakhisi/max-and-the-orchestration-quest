@@ -27,6 +27,7 @@ public class ImageDownloaderDevice : MonoBehaviour
         // alpine                                            latest      cea2ff433c61   7 months ago   8.31MB
         // traefik/whoami                                    latest      6fee7566e427   9 months ago   7.16MB
         // grafana/grafana                                   10.2.3      8387f19108f9   2 years ago    399MB
+
         AvailableImages = new string[] {
                 "influxdb",
                 "akshaychikhalkar/carla-driving-simulator-client",
@@ -38,17 +39,30 @@ public class ImageDownloaderDevice : MonoBehaviour
                 "traefik/whoami",
                 "grafana/grafana",
         };
-        // Example usage
-        if (AvailableImages.Length > 0)
-            selectedImage = AvailableImages[0];
-        else
-            selectedImage = "NO IMAGE AVAILABLE";
+       
 
-        UpdateDisplay(selectedImage);
+        
     }
 
     void Update()
     {
+
+         if(WebSocketClient.hasImages == true &&  WebSocketClient.DockerImages.ToArray().Length > 0){
+                AvailableImages = WebSocketClient.DockerImages.ToArray();
+
+                foreach(var img in AvailableImages){
+                    Debug.Log(img);
+                }
+                // Example usage
+                if (AvailableImages.Length > 0)
+                    selectedImage = AvailableImages[0];
+                else
+                    selectedImage = "NO IMAGE AVAILABLE";
+
+                UpdateDisplay(selectedImage);
+
+        }
+
         if (isTriggered)
             timeElapsed += Time.deltaTime;
 
