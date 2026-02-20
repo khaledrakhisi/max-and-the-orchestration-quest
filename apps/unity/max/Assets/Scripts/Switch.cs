@@ -96,7 +96,7 @@ public class Switch : MonoBehaviour
 		if (target)
 		{
 
-			if (switchType != SwitchTypes.Button && target.GetComponent<PlayerInteraction>().interacted && !_stateChanged)
+			if (switchType != SwitchTypes.Button && target.GetComponent<PlayerInteraction>().justInteracted && !_stateChanged)
 			{
 
 				if (powerSupply && powerSupply.machineState == Machine.MachineState.Off)

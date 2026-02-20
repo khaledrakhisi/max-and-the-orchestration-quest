@@ -2,10 +2,11 @@
 using System.Collections.Generic;
 using UnityEngine;
 
-public class SwitchLifter : MonoBehaviour {
-	
+public class SwitchLifter : MonoBehaviour
+{
+
 	public enum States
-	{		
+	{
 		Wait = 0,
 		On,
 		Up,
@@ -27,8 +28,10 @@ public class SwitchLifter : MonoBehaviour {
 
 	[SerializeField]
 	private bool _stateChanged;
-	public bool StateChanged{
-		get {
+	public bool StateChanged
+	{
+		get
+		{
 			return _stateChanged;
 		}
 	}
@@ -36,46 +39,61 @@ public class SwitchLifter : MonoBehaviour {
 
 	private Color debugCollisionColor = Color.yellow;
 	// Use this for initialization
-	void Start () {
-		animator = GetComponent<Animator> ();
-		animator.SetInteger ("AnimState", (int)lifterSwitchTask);
+	void Start()
+	{
+		animator = GetComponent<Animator>();
+		animator.SetInteger("AnimState", (int)lifterSwitchTask);
 	}
 
-	void Update(){
-		if (lifter) {
+	void Update()
+	{
+		if (lifter)
+		{
 			if (lifter.states == Lifter.States.Unfunctional && !_stateChanged)
 				state = States.Unfunctional;
-			
+
 			else if (lifter.states != Lifter.States.Unfunctional && !_stateChanged)
 				state = lifterSwitchTask;
 		}
-			
-		if (state != States.Unfunctional && !_stateChanged) {
-			
-			if (lifter.isMoving) {
+
+		if (state != States.Unfunctional && !_stateChanged)
+		{
+
+			if (lifter.isMoving)
+			{
 				state = States.Wait;
 
-			} else {
-				if (lifter.currentPoint == levelNumber) {
+			}
+			else
+			{
+				if (lifter.currentPoint == levelNumber)
+				{
 					state = lifterSwitchTask;
 
-				} else if (lifter.currentPoint > levelNumber) {
+				}
+				else if (lifter.currentPoint > levelNumber)
+				{
 					state = States.Down;
 
-				} else if (lifter.currentPoint < levelNumber) {
+				}
+				else if (lifter.currentPoint < levelNumber)
+				{
 					state = States.Up;
-				} 
+				}
 			}
 		}
 
-		animator.SetInteger ("AnimState", (int)state);
+		animator.SetInteger("AnimState", (int)state);
 	}
 
-	void FixedUpdate(){
+	void FixedUpdate()
+	{
 
-		if (_stateChanged) {
+		if (_stateChanged)
+		{
 			timeElapsed += Time.deltaTime;
-			if (timeElapsed > .3f) {
+			if (timeElapsed > .3f)
+			{
 				_stateChanged = false;
 				timeElapsed = 0f;
 			}
@@ -84,50 +102,62 @@ public class SwitchLifter : MonoBehaviour {
 		var pos = cubecenterPosition;
 		pos.x += transform.position.x;
 		pos.y += transform.position.y;
-		target = Physics2D.OverlapBox (pos, cubeSize, 1, collisionLayer);
-		if (target) {
-			if (target.tag == "Player") {
-				playerInteraction = target.GetComponent<PlayerInteraction> ();
-				if (playerInteraction.interacted) {					
+		target = Physics2D.OverlapBox(pos, cubeSize, 1, collisionLayer);
+		if (target)
+		{
+			if (target.tag == "Player")
+			{
+				playerInteraction = target.GetComponent<PlayerInteraction>();
+				if (playerInteraction.justInteracted)
+				{
 					if (!lifter)
 						return;
-					
-					if (state == States.Up && !_stateChanged) {
+
+					if (state == States.Up && !_stateChanged)
+					{
 						lifter.destinationPoint = lifter.currentPoint == levelNumber ? ++lifter.destinationPoint : lifter.destinationPoint = levelNumber;
-					
-					} else if (state == States.Down && !_stateChanged) {
+
+					}
+					else if (state == States.Down && !_stateChanged)
+					{
 						lifter.destinationPoint = lifter.currentPoint == levelNumber ? --lifter.destinationPoint : lifter.destinationPoint = levelNumber;
 
-					} else if (state == States.Unfunctional && !_stateChanged) {
+					}
+					else if (state == States.Unfunctional && !_stateChanged)
+					{
 						//beep
 						state = States.On;
 						//Debug.Log ("tud tud " + state);
 					}
 					_stateChanged = true;
 				}
-			} 
-		} else {
-			
+			}
+		}
+		else
+		{
+
 		}
 	}
-		
 
-	void OnDrawGizmos(){
-		
+
+	void OnDrawGizmos()
+	{
+
 		//draw hit area
 		Gizmos.color = Color.red;
 		var bpos = cubecenterPosition;
 		bpos.x += transform.position.x;
 		bpos.y += transform.position.y;
-		Gizmos.DrawWireCube (bpos, cubeSize);
+		Gizmos.DrawWireCube(bpos, cubeSize);
 
 		//draw connections
 		Gizmos.color = debugCollisionColor;
 		Vector2 pos = Vector2.zero;
-		if (lifter) {
+		if (lifter)
+		{
 			pos = lifter.transform.position;
 		}
-		Gizmos.DrawWireSphere (pos, .05f);
-		Gizmos.DrawLine (transform.position, pos);
+		Gizmos.DrawWireSphere(pos, .05f);
+		Gizmos.DrawLine(transform.position, pos);
 	}
 }

@@ -6,13 +6,10 @@ public class PlayerManager : AbstractBehavior
 {
 
 	public bool isManual = false;
-
-
 	private bool gameOver;
 	private bool idle;
 	private float animationPlaySpeed;
 	//private CollisionState collisionState;
-
 	private Walk walkBehaviour;
 	private LongJump longJump;
 	private Duck duckBehaviour;

@@ -3,10 +3,9 @@ using System.Collections;
 
 public class ObjectSpawner : MonoBehaviour
 {
-
 	public GameObject[] prefabs;
-
-	private float rotationZ = 45f;
+	[SerializeField]
+	private float rotationZ = 180f;
 	public bool isOn = false;
 	private float delay = 2.0f;
 	public Vector2 delayRange = new Vector2(1, 2);
@@ -22,7 +21,6 @@ public class ObjectSpawner : MonoBehaviour
 
 	void FixedUpdate()
 	{
-
 		if (isOn && !running)
 		{
 			running = true;
