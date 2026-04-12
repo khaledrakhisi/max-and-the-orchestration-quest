@@ -5,8 +5,22 @@ import random
 import json
 import docker
 import threading
+import os
 
-client = docker.DockerClient(base_url='tcp://localhost:2375')
+from logging_config import setup_logging, get_logger
+
+# initialize logging (uses env vars if set)
+setup_logging(
+    level=os.getenv("LOG_LEVEL", "INFO"),
+    log_dir=os.getenv("LOG_DIR", None),
+    mongo_uri=os.getenv("MONGO_LOG_URI", None),
+    mongo_db=os.getenv("MONGO_LOG_DB", "logs"),
+    mongo_collection=os.getenv("MONGO_LOG_COLLECTION", "app_logs"),
+    mongo_ttl_days=int(os.getenv("MONGO_LOG_TTL_DAYS", "30")),
+)
+logger = get_logger(__name__)
+
+client = docker.from_env()
 
 # Will be assigned once event loop starts
 MAIN_LOOP = None
@@ -44,8 +58,10 @@ async def create_container(ws,image_name):
             "container_id":container_object.id,
             "container_status": container_object.status
         }
+        logger.info("container created: %s", result_object)
         await ws.send(json.dumps(result_object))
     except Exception as e:
+        logger.exception("cannot create container %s", image_name)
         await ws.send(json.dumps({"status": "cannot create the container", "message": str(e)}))
 
 
@@ -58,9 +74,10 @@ async def start_container(ws,container_name):
             "container_id":container_object.id,
             "container_status": container_object.status
         }
-        print(result_object)
+        logger.info("container started: %s", result_object)
         await ws.send(json.dumps(result_object))
     except Exception as e:
+        logger.exception("cannot start container %s", container_name)
         await ws.send(json.dumps({"status": "cannot start the container", "message": str(e)}))
 
 async def stop_container(ws,container_name):
@@ -72,9 +89,10 @@ async def stop_container(ws,container_name):
             "container_id":container_object.id,
             "container_status": container_object.status
         }
-        print(result_object)
+        logger.info("container stopped: %s", result_object)
         await ws.send(json.dumps(result_object))
     except Exception as e:
+        logger.exception("cannot stop container %s", container_name)
         await ws.send(json.dumps({"status": "cannot stop the container", "message": str(e)}))
 
 async def remove_container(ws,container_name):
@@ -114,7 +132,7 @@ async def get_container_list(ws):
 async def get_image_list(ws):
     image_list = []
     images = client.images.list(all=True)
-    print(images)
+    logger.debug("images: %s", images)
     for image in images:
         image_object =  {} 
         image_object["image_id"] = image.id

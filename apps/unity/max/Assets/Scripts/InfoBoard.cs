@@ -2,6 +2,7 @@ using UnityEngine;
 using TMPro;
 using System.Collections;
 using System.Collections.Generic;
+using System.Linq;
 
 public class InfoBoard : MonoBehaviour
 {
@@ -111,5 +112,11 @@ public class InfoBoard : MonoBehaviour
             yield return new WaitForSeconds(blinkSpeed);
             timeWaited += blinkSpeed;
         }
+    }
+
+    public void DoAddToList(string text)
+    {
+        Debug.Log(text);
+        sequence.Append(new MessageStep() { delay = 10, state = SystemState.Danger, text = text });
     }
 }
