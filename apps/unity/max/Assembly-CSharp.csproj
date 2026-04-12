@@ -146,6 +146,7 @@
     <Compile Include="Assets\Raving Bots\Scripts\Water2D\Water2DSplashFX.cs" />
     <Compile Include="Assets\Scripts\RatAI.cs" />
     <Compile Include="Assets\Scripts\ObjectFaceDirection.cs" />
+    <Compile Include="Assets\Scripts\WebsocketClient.cs" />
     <Compile Include="Assets\Scripts\Cameraman.cs" />
     <Compile Include="Assets\Scripts\PlayerManager.cs" />
     <Compile Include="Assets\Scripts\Switch.cs" />

@@ -84,10 +84,6 @@ public class SwitchLifter : MonoBehaviour
 		}
 
 		animator.SetInteger("AnimState", (int)state);
-	}
-
-	void FixedUpdate()
-	{
 
 		if (_stateChanged)
 		{
@@ -138,7 +134,6 @@ public class SwitchLifter : MonoBehaviour
 
 		}
 	}
-
 
 	void OnDrawGizmos()
 	{
