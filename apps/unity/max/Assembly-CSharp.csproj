@@ -115,6 +115,7 @@
     <Compile Include="Assets\TextMesh Pro\Examples &amp; Extras\Scripts\Benchmark03.cs" />
     <Compile Include="Assets\Scripts\ImageDownloaderDevice.cs" />
     <Compile Include="Assets\Scripts\UIManager.cs" />
+    <Compile Include="Assets\Scripts\WebSocketManager.cs" />
     <Compile Include="Assets\Scripts\AutoMovingwalkway.cs" />
     <Compile Include="Assets\Scripts\PopupAnimation.cs" />
     <Compile Include="Assets\Scripts\Flag.cs" />
@@ -146,7 +147,6 @@
     <Compile Include="Assets\Raving Bots\Scripts\Water2D\Water2DSplashFX.cs" />
     <Compile Include="Assets\Scripts\RatAI.cs" />
     <Compile Include="Assets\Scripts\ObjectFaceDirection.cs" />
-    <Compile Include="Assets\Scripts\WebsocketClient.cs" />
     <Compile Include="Assets\Scripts\Cameraman.cs" />
     <Compile Include="Assets\Scripts\PlayerManager.cs" />
     <Compile Include="Assets\Scripts\Switch.cs" />
