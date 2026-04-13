@@ -3,6 +3,7 @@ using TMPro;
 using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
+using System;
 
 public class InfoBoard : MonoBehaviour
 {
@@ -58,7 +59,9 @@ public class InfoBoard : MonoBehaviour
     {
         do
         {
-            foreach (MessageStep step in sequence)
+            List<MessageStep> currentSequence = new(sequence);
+
+            foreach (MessageStep step in currentSequence)
             {
                 ApplyVisuals(step);
                 yield return StartCoroutine(TypeRoutine(step));
@@ -114,9 +117,14 @@ public class InfoBoard : MonoBehaviour
         }
     }
 
-    public void DoAddToList(string text)
+    public void DoAddToList(string text, string delay)
     {
-        Debug.Log(text);
-        sequence.Append(new MessageStep() { delay = 10, state = SystemState.Danger, text = text });
+        float dly = float.Parse(delay);
+        sequence.Add(new MessageStep() { delay = dly, state = SystemState.Info, text = text });
+    }
+
+    public void DoRemoveItem(string index)
+    {
+        sequence.RemoveAt(Convert.ToInt32(index));
     }
 }
