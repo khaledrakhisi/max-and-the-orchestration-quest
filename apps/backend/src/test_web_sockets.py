@@ -29,6 +29,7 @@ def get_container_stats(container_name):
     mem_percent = (mem_usage / mem_limit) * 100
 
     return {
+        "type":"container_stats",
         "container": container_name,
         "status": container.status,
         "cpu_percent": cpu_percent,
@@ -36,17 +37,17 @@ def get_container_stats(container_name):
         "memory_bytes": mem_usage
     }
 
-async def create_container(ws,image_name):
+async def create_container(ws,image_name,cpus,memory):
     try:
-        container_object=client.containers.create(name= image_name[-6:]+"_container",image=image_name,detach=True,ports= {'80/tcp': 8080})
+        container_object=client.containers.create(name= image_name[-6:]+"_container",image=image_name,detach=True,ports= {'80/tcp': 8080},cpu_count=cpus,mem_limit=str(memory)+"m")
         result_object = {
             "container_name":container_object.name,
             "container_id":container_object.id,
             "container_status": container_object.status
         }
-        await ws.send(json.dumps(result_object))
+        await ws.send(json.dumps({"type":"create_container","response":result_object}))
     except Exception as e:
-        await ws.send(json.dumps({"status": "cannot create the container", "message": str(e)}))
+        await ws.send(json.dumps({"type":"create_container","status": "cannot create the container", "message": str(e)}))
 
 
 async def start_container(ws,container_name):
@@ -59,9 +60,9 @@ async def start_container(ws,container_name):
             "container_status": container_object.status
         }
         print(result_object)
-        await ws.send(json.dumps(result_object))
+        await ws.send(json.dumps({"type":"start_container","response":result_object}))
     except Exception as e:
-        await ws.send(json.dumps({"status": "cannot start the container", "message": str(e)}))
+        await ws.send(json.dumps({"type":"start_container","status": "cannot start the container", "message": str(e)}))
 
 async def stop_container(ws,container_name):
     try:
@@ -73,9 +74,9 @@ async def stop_container(ws,container_name):
             "container_status": container_object.status
         }
         print(result_object)
-        await ws.send(json.dumps(result_object))
+        await ws.send(json.dumps({"type":"stop_container","response":result_object}))
     except Exception as e:
-        await ws.send(json.dumps({"status": "cannot stop the container", "message": str(e)}))
+        await ws.send(json.dumps({"type":"stop_container","status": "cannot stop the container", "message": str(e)}))
 
 async def remove_container(ws,container_name):
     try:
@@ -86,18 +87,18 @@ async def remove_container(ws,container_name):
             "container_id":container_object.id,
             "container_status": container_object.status
         }
-        await ws.send(json.dumps("container "+container_name+" is removed"))
+        await ws.send(json.dumps({"type":"remove_container","message":"container "+container_name+" is removed"}))
     except Exception as e:
-        await ws.send(json.dumps({"status": "cannot remove the container", "message": str(e)}))
+        await ws.send(json.dumps({"type":"remove_container","status": "cannot remove the container", "message": str(e)}))
 
 
 async def remove_image(ws,image_name):
     try:
         image_object=client.images.get(image_name)
         image_object.remove()
-        await ws.send(json.dumps("image "+image_name+" is removed"))
+        await ws.send(json.dumps({"type":"remove_image","message":"image "+image_name+" is removed"}))
     except Exception as e:
-        await ws.send(json.dumps({"status": "cannot remove the image", "message": str(e)}))
+        await ws.send(json.dumps({"type":"remove_image","status": "cannot remove the image", "message": str(e)}))
 
 async def get_container_list(ws):
     container_list = []
@@ -109,7 +110,7 @@ async def get_container_list(ws):
         container_object["container_status"] = container.status
         container_list.append(container_object)
     # print(container_list)
-    await ws.send(json.dumps(container_list))
+    await ws.send(json.dumps({"type":"container_list","response":container_list}))
 
 async def get_image_list(ws):
     image_list = []
@@ -122,23 +123,33 @@ async def get_image_list(ws):
         # image_object["image_status"] = image.status
         image_list.append(image_object)
     # print(container_list)
-    await ws.send(json.dumps(image_list))
+    await ws.send(json.dumps({"type":"image_list","response":image_list}))
 
 # ---- IMAGE PULL THREAD SAFE ---- #
 def pull_image_thread(websocket, image_name, done_event):
     global MAIN_LOOP
     try:
+        images = client.images.list(all=True)
+        for image in images:
+            if image_name == image.tags[0]:
+                asyncio.run_coroutine_threadsafe(
+                        websocket.send(json.dumps({"status": "failed", "message": f"{image_name} is already present"})),
+                        MAIN_LOOP
+                    )
+                return
         for line in client.api.pull(image_name, stream=True, decode=True):
             if "error" in line or "errorDetail" in line:
                 msg = line.get("error") or line["errorDetail"]["message"]
+                
                 asyncio.run_coroutine_threadsafe(
                     websocket.send(json.dumps({"status": "failed", "message": msg})),
                     MAIN_LOOP
                 )
                 return
-        
+        ram  = (random.choice([1200,700,800,600,1100]))
+        cpu = random.randint(1, 5)
         asyncio.run_coroutine_threadsafe(
-            websocket.send(json.dumps({"status": "done_"+image_name+"_pull"})),
+            websocket.send(json.dumps({"type":"pull_image","status": "done_"+image_name+"_pull","rss":[ram,cpu]})),
             MAIN_LOOP
         )
 
@@ -206,9 +217,13 @@ async def handler(websocket):
 
         # function for creating docker containers.
         elif message.startswith("create_container:"):
-            image_name = message.split(":")[1]
+            string_chunks = message.split(":")
+            image_name = string_chunks[1]
+            cpus = int(string_chunks[2])
+            memory = string_chunks[3]
             print(message)
-            tasks.append(asyncio.create_task(create_container(websocket,image_name)))
+            print(cpus,memory)
+            tasks.append(asyncio.create_task(create_container(websocket,image_name,cpus,memory)))
 
         elif message.startswith("start_container:"):
             container_name = message.split(":")[1]
@@ -239,14 +254,15 @@ async def handler(websocket):
             # image = message.split(":")[1]
             # thread = threading.Thread(target=pull_image_thread, args=(websocket, image))
             # thread.start()
-            image = message.split(":")[1]
+            image_chunks = message.split(":")
+            image_name = image_chunks[1] +":"+ image_chunks[2]
 
             # event to track completion
             done_event = threading.Event()
 
             thread = threading.Thread(
                 target=pull_image_thread,
-                args=(websocket, image, done_event),
+                args=(websocket, image_name, done_event),
                 daemon=True
             )
             thread.start()
