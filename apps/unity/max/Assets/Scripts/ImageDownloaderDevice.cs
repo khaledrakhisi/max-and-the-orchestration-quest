@@ -13,6 +13,7 @@ using UnityEngine.UIElements;
 
 public class ImageDownloaderDevice : MonoBehaviour
 {
+    [SerializeField] private string serverUrl = "ws://localhost:8765";
     [SerializeField] private string[] AvailableImages;
     [SerializeField] private TextMeshProUGUI screenText;
     [SerializeField] private float typingSpeed = 0.05f;
@@ -67,6 +68,7 @@ public class ImageDownloaderDevice : MonoBehaviour
 
         // --- SUBSCRIBE TO GLOBAL MESSAGES ---
         // Tell the global manager: "Whenever you receive a message, trigger my PrintImages function"
+        Debug.Log(WebSocketManager.Instance);
         if (WebSocketManager.Instance != null)
         {
             WebSocketManager.Instance.OnMessageReceived += PrintImages;
@@ -183,7 +185,7 @@ public class ImageDownloaderDevice : MonoBehaviour
         }
 
         // --- SEND COMMAND USING SINGLETON ---
-        WebSocketManager.Instance.SendMessageToServer("pull_image:alpine");
+        WebSocketManager.Instance.SendMessageToServer($"pull_image:{selectedImage}");
     }
 
     public void DoReset()
