@@ -137,22 +137,43 @@ def pull_image_thread(websocket, image_name, done_event):
                         MAIN_LOOP
                     )
                 return
+        ram  = (random.choice([1200,700,800,600,1100]))
+        cpu = random.randint(1, 5)
+        last_status = ""
         for line in client.api.pull(image_name, stream=True, decode=True):
             if "error" in line or "errorDetail" in line:
                 msg = line.get("error") or line["errorDetail"]["message"]
-                
                 asyncio.run_coroutine_threadsafe(
                     websocket.send(json.dumps({"status": "failed", "message": msg})),
                     MAIN_LOOP
                 )
                 return
-        ram  = (random.choice([1200,700,800,600,1100]))
-        cpu = random.randint(1, 5)
+            # 2. Extract meaningful progress
+
+            status_text = line.get("status", "")
+            progress_text = line.get("progress", "")
+            current_message = f"{status_text} {progress_text}".strip()
+            
+            # 3. Only send update if there's actual movement to avoid flooding the WS
+            if current_message != last_status:
+                print({
+                        "status": "pulling",
+                        "image": image_name,
+                        "detail": current_message
+                    })
+                asyncio.run_coroutine_threadsafe(
+                    websocket.send(json.dumps({
+                        "status": "pulling",
+                        "image": image_name,
+                        "detail": current_message
+                    })), 
+                    MAIN_LOOP
+                )
+                last_status = current_message
         asyncio.run_coroutine_threadsafe(
-            websocket.send(json.dumps({"type":"pull_image","status": "done_"+image_name+"_pull","rss":[ram,cpu]})),
+            websocket.send(json.dumps({"status": "done","image": image_name,"rss":[ram,cpu]})), 
             MAIN_LOOP
         )
-
     except Exception as e:
         asyncio.run_coroutine_threadsafe(
             websocket.send(json.dumps({"status": "failed", "message": str(e)})),
