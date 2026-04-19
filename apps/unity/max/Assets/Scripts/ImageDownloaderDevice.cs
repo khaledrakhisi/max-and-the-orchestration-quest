@@ -31,6 +31,19 @@ public class ImageDownloaderDevice : MonoBehaviour
     public static bool hasImages = false;
     private bool isWaiting = false;
 
+    public static ImageDownloaderDevice Instance;
+
+    private void Awake()
+    {
+        if (Instance != null && Instance != this)
+        {
+            Destroy(gameObject);
+            return;
+        }
+
+        Instance = this;
+    }
+
     public class DockerImage
     {
         public string image_id;

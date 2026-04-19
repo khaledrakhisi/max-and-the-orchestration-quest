@@ -1,8 +1,7 @@
 import asyncio
 import websockets
-import time
-import random
 import json
+import random
 import docker
 import threading
 
@@ -131,7 +130,7 @@ def pull_image_thread(websocket, image_name, done_event):
     try:
         images = client.images.list(all=True)
         for image in images:
-            if image_name == image.tags[0]:
+            if image_name == image.tags[0].split(":")[0]:
                 asyncio.run_coroutine_threadsafe(
                         websocket.send(json.dumps({"status": "failed", "message": f"{image_name} is already present"})),
                         MAIN_LOOP
@@ -206,13 +205,7 @@ async def stream_stats(ws, container):
             return
         await asyncio.sleep(1)
 
-# async def send_threadsafe(ws, data):
-#     """Ensures WebSocket send works from thread context."""
-#     if ws.closed:
-#         return
-#     await ws.send(json.dumps(data))
 
-# ---- MAIN WEBSOCKET HANDLER ---- #
 async def handler(websocket):
     tasks = []
 
@@ -276,7 +269,11 @@ async def handler(websocket):
             # thread = threading.Thread(target=pull_image_thread, args=(websocket, image))
             # thread.start()
             image_chunks = message.split(":")
-            image_name = image_chunks[1] +":"+ image_chunks[2]
+            image_name = ""
+            if len(image_chunks)>2:
+                image_name = image_chunks[1] +":"+ image_chunks[2]
+            else:
+                image_name = image_chunks[1] 
 
             # event to track completion
             done_event = threading.Event()

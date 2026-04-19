@@ -1,18 +1,21 @@
-﻿using System.Collections;
+using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
-
+using System.IO;
+using System;
 public class ObjectDestroyer : MonoBehaviour {
 
 	public LayerMask Layer;
 	public Vector3 collisionCubeSize;
 
 	private Collider2D target;
-	private Color debugCollisionColor = Color.red;
-
+	private Color debugCollisionColor = Color.red; 
+    public ImageDownloaderDevice imageDownloaderDevice;
+    private bool objectDestroy = false;
 	// Use this for initialization
 	void Start () {
-		
+       imageDownloaderDevice = ImageDownloaderDevice.Instance;
+       WebSocketManager.Instance.OnMessageReceived+=DestroyImage;
 	}
 	
 	// Update is called once per frame
@@ -23,9 +26,20 @@ public class ObjectDestroyer : MonoBehaviour {
 		target = Physics2D.OverlapBox(pos, collisionCubeSize, 1, Layer);
 		if (target) {
 			Destroy (target.gameObject);
+			Debug.Log($"target_gameobject: {target.gameObject}");
+			// objectDestroy = true;
+			if (imageDownloaderDevice != null)
+            {
+            	Debug.Log("destroy image");
+                Debug.Log($"selected image: {imageDownloaderDevice.selectedImage}");
+                WebSocketManager.Instance.SendMessageToServer($"remove_image:{imageDownloaderDevice.selectedImage}");
+            }else{
+                Debug.LogError("imageDownloaderDevice selected image Singleton is missing from the scene!");
+            }
+			
+			
 		}
 	}
-
 	void OnDrawGizmos(){
 		Gizmos.color = debugCollisionColor;
 		//draw hit area
@@ -34,4 +48,20 @@ public class ObjectDestroyer : MonoBehaviour {
 		bpos.y += transform.position.y;
 		Gizmos.DrawCube (bpos, collisionCubeSize);
 	}
+	void DestroyImage(string message)
+    {
+        
+        try
+        {
+            // Attempt to parse the message. 
+            // Note: If you have multiple objects listening, you should check the message
+            // to ensure it's actually meant for this downloader (e.g., check for a "type" field)
+            Debug.Log($"message:" + message);
+        }
+        catch (Exception e)
+        {
+            // Ignore messages that aren't DockerImage lists (they might be meant for a ChatBox or other object)
+            Debug.Log($"Message was not a DockerImage list: {e.Message}");
+        }
+    }
 }
