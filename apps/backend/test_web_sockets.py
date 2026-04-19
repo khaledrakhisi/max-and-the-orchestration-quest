@@ -38,7 +38,9 @@ def get_container_stats(container_name):
 
 async def create_container(ws,image_name,cpus,memory):
     try:
-        container_object=client.containers.create(name= image_name[-6:]+"_container",image=image_name,detach=True,ports= {'80/tcp': 8080},cpu_count=cpus,mem_limit=str(memory)+"m")
+        # invalid container name issue so used last 6 charactes
+        container_name = image_name.split("/")[1]
+        container_object=client.containers.create(name= container_name+"_container",image=image_name,detach=True,ports= {'80/tcp': 8080},cpu_count=cpus,mem_limit=str(memory)+"m")
         result_object = {
             "container_name":container_object.name,
             "container_id":container_object.id,
