@@ -11,10 +11,12 @@ public class ObjectDestroyer : MonoBehaviour {
 	private Collider2D target;
 	private Color debugCollisionColor = Color.red; 
     public ImageDownloaderDevice imageDownloaderDevice;
+    public Factory factoryInstance;
     private bool objectDestroy = false;
 	// Use this for initialization
 	void Start () {
        imageDownloaderDevice = ImageDownloaderDevice.Instance;
+       factoryInstance = Factory.Instance;
        WebSocketManager.Instance.OnMessageReceived+=DestroyImage;
 	}
 	
@@ -26,14 +28,20 @@ public class ObjectDestroyer : MonoBehaviour {
 		target = Physics2D.OverlapBox(pos, collisionCubeSize, 1, Layer);
 		if (target) {
 			Destroy (target.gameObject);
-			Debug.Log($"target_gameobject: {target.gameObject}");
+			Debug.Log($"target tag: {target.gameObject.tag}");
 			// objectDestroy = true;
-			if (imageDownloaderDevice != null)
+			if (imageDownloaderDevice != null && target.gameObject.CompareTag("Block"))
             {
             	Debug.Log("destroy image");
                 Debug.Log($"selected image: {imageDownloaderDevice.selectedImage}");
                 WebSocketManager.Instance.SendMessageToServer($"remove_image:{imageDownloaderDevice.selectedImage}");
-            }else{
+            }else if (imageDownloaderDevice != null && target.gameObject.CompareTag("container_block"))
+            {
+            	Debug.Log("destroy container");
+                Debug.Log($"selected container: {factoryInstance.FactoryContainerName}");
+                WebSocketManager.Instance.SendMessageToServer($"remove_container:{factoryInstance.FactoryContainerName}");
+            }
+            else{
                 Debug.LogError("imageDownloaderDevice selected image Singleton is missing from the scene!");
             }
 			

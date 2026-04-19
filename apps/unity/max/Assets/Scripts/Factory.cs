@@ -3,6 +3,7 @@ using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.IO;
+using Newtonsoft.Json.Linq;
 public class Factory : MonoBehaviour
 {
     public enum States
@@ -19,21 +20,37 @@ public class Factory : MonoBehaviour
     public MoveToPoint fence;
     public ImageDownloaderDevice imageDownloaderDevice;
 
+    public string FactoryContainerName;
+
     private States previousState;
+
+    public static Factory Instance;
 
     // Start is called once before the first execution of Update after the MonoBehaviour is created
     void Start()
     {
        imageDownloaderDevice = ImageDownloaderDevice.Instance;
-       WebSocketManager.Instance.OnMessageReceived+=Test;
+       WebSocketManager.Instance.OnMessageReceived+=Container_data;
     }
 
+
+    private void Awake()
+    {
+        if (Instance != null && Instance != this)
+        {
+            Destroy(gameObject);
+            return;
+        }
+
+        Instance = this;
+    }
 
     // Update is called once per frame
     void Update()
     {
          if (state != previousState)
         {
+            Debug.Log($"state_test:{state}");
             OnStateChanged(state);
             previousState = state;
         }
@@ -108,15 +125,15 @@ public class Factory : MonoBehaviour
             
 
             // // Subscribe only once
-            WebSocketManager.Instance.OnMessageReceived += Test;
+            WebSocketManager.Instance.OnMessageReceived += Container_data;
         }
     }
     void OnDestroy()
     {
-        WebSocketManager.Instance.OnMessageReceived -= Test;
+        WebSocketManager.Instance.OnMessageReceived -= Container_data;
     }
 
-    void Test(string message)
+    void Container_data(string message)
     {
         
         try
@@ -125,6 +142,11 @@ public class Factory : MonoBehaviour
             // Note: If you have multiple objects listening, you should check the message
             // to ensure it's actually meant for this downloader (e.g., check for a "type" field)
             Debug.Log($"message:" + message);
+            var obj = JObject.Parse(message);
+            FactoryContainerName = obj["response"]["container_name"].ToString();
+
+            Debug.Log($"container_name: {FactoryContainerName}");
+
         }
         catch (Exception e)
         {
