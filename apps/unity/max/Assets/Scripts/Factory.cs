@@ -1,3 +1,4 @@
+using System;
 using UnityEngine;
 
 public class Factory : MonoBehaviour
@@ -14,6 +15,9 @@ public class Factory : MonoBehaviour
     public Smoke smoke;
     public AutoMovingwalkway conveyBelt;
     public MoveToPoint fence;
+    [SerializeField]
+    private InfoBoard infoBoard;
+    private bool statusPosted = false;
 
     // Start is called once before the first execution of Update after the MonoBehaviour is created
     void Start()
@@ -37,15 +41,20 @@ public class Factory : MonoBehaviour
         }
         else if (state == States.Input)
         {
+            if (!statusPosted && infoBoard)
+            {
+                infoBoard.DoShowOneMessage("* now in input mode ...", "Warning");
+                statusPosted = true;
+            }
             if (gear1)
             {
                 gear1.isOn = true;
-                gear1.RPM = -50;
+                gear1.RPM = -Math.Abs(gear1.RPM);
             }
             if (gear2)
             {
                 gear2.isOn = true;
-                gear2.RPM = -50;
+                gear2.RPM = Math.Abs(gear2.RPM);
             }
             if (smoke)
                 smoke.isOn = true;
@@ -61,12 +70,12 @@ public class Factory : MonoBehaviour
             if (gear1)
             {
                 gear1.isOn = true;
-                gear1.RPM = 50;
+                gear1.RPM = Math.Abs(gear1.RPM);
             }
             if (gear2)
             {
                 gear2.isOn = true;
-                gear2.RPM = 50;
+                gear2.RPM = -Math.Abs(gear2.RPM);
             }
             if (smoke)
                 smoke.isOn = true;

@@ -91,7 +91,6 @@ public class ImageDownloaderDevice : MonoBehaviour
     /// </summary>
     void PrintImages(string message)
     {
-        Debug.Log($"message:" + message);
         try
         {
             // Attempt to parse the message. 
@@ -216,10 +215,9 @@ public class ImageDownloaderDevice : MonoBehaviour
             displayText += img + "\n";
         }
 
-        if (infoBoard != null)
+        if (infoBoard)
         {
-            infoBoard.DoRemoveItem("0");
-            infoBoard.DoAddToList(displayText, "0");
+            infoBoard.DoShowOneMessage(displayText, "Success");
         }
     }
 }

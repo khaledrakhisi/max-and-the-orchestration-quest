@@ -13,7 +13,7 @@ public class CollectableObject : Collectable
 	[SerializeField]
 	private ECollectableVariant eCollectableVariant;
 	[SerializeField]
-	private Container container;
+	private ResourcesIndicators resourcesIndicators;
 	public int amount = 40;
 	override protected void OnCollect(GameObject target)
 	{
@@ -23,19 +23,19 @@ public class CollectableObject : Collectable
 			ap.Audio_Play_Clip();
 		}
 
-		if (container)
+		if (resourcesIndicators)
 		{
 			if (eCollectableVariant == ECollectableVariant.CPU)
 			{
-				container.DoAdd("cpu", amount.ToString());
+				resourcesIndicators.DoAdd("cpu", amount.ToString());
 			}
 			else if (eCollectableVariant == ECollectableVariant.RAM)
 			{
-				container.DoAdd("ram", amount.ToString());
+				resourcesIndicators.DoAdd("ram", amount.ToString());
 			}
 			else if (eCollectableVariant == ECollectableVariant.DISK)
 			{
-				container.DoAdd("disk", amount.ToString());
+				resourcesIndicators.DoAdd("disk", amount.ToString());
 			}
 		}
 	}

@@ -170,6 +170,7 @@
     <Compile Include="Assets\Scripts\Vibration.cs" />
     <Compile Include="Assets\TextMesh Pro\Examples &amp; Extras\Scripts\TMP_UiFrameRateCounter.cs" />
     <Compile Include="Assets\Scripts\Wind.cs" />
+    <Compile Include="Assets\Scripts\RecourcesIndicators.cs" />
     <Compile Include="Assets\Scripts\RendererSortingLayer.cs" />
     <Compile Include="Assets\TextMesh Pro\Examples &amp; Extras\Scripts\VertexZoom.cs" />
     <Compile Include="Assets\Scripts\CameraFollow.cs" />
