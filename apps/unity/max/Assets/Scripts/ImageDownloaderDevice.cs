@@ -221,7 +221,7 @@ public class ImageDownloaderDevice : MonoBehaviour
         if (infoBoard != null)
         {
             infoBoard.DoRemoveItem("0");
-            infoBoard.DoAddToList(displayText, "50");
+            infoBoard.DoAddToList(displayText, "0");
         }
     }
 }

@@ -7,10 +7,9 @@ using System;
 
 public class InfoBoard : MonoBehaviour
 {
-    // --- 1. DEFINITIONS ---
     public enum SystemState { Info = 0, Success = 1, Warning = 2, Danger = 3 }
 
-    [System.Serializable]
+    [Serializable]
     public struct MessageStep
     {
         [TextArea(2, 5)] public string text;
@@ -18,12 +17,12 @@ public class InfoBoard : MonoBehaviour
         public SystemState state;
     }
 
-    [System.Serializable]
-    public struct StateSettings // Renamed from StateColors to include Sprite
+    [Serializable]
+    public struct StateSettings
     {
         public SystemState state;
         public Color fontColor;
-        public Sprite backgroundSprite; // <--- NEW: The image for this state
+        public Sprite backgroundSprite; // the info board sprite for specific color
     }
 
     // --- 2. INSPECTOR SETTINGS ---
@@ -41,12 +40,11 @@ public class InfoBoard : MonoBehaviour
 
     [Header("References")]
     [SerializeField] private TextMeshProUGUI screenText;
-
-    // REPLACED: Animator is gone, replaced with SpriteRenderer
     [SerializeField] private SpriteRenderer boardRenderer;
+    // Add this to break out of infinite waits
+    private bool forceSkipWait = false;
     // Note: If using UI Canvas for the background, use 'Image' instead of 'SpriteRenderer'
 
-    // --- 3. LOGIC ---
     void Start()
     {
         if (sequence != null && sequence.Count > 0)
@@ -60,7 +58,6 @@ public class InfoBoard : MonoBehaviour
         do
         {
             List<MessageStep> currentSequence = new(sequence);
-
             foreach (MessageStep step in currentSequence)
             {
                 ApplyVisuals(step);
@@ -106,21 +103,25 @@ public class InfoBoard : MonoBehaviour
         bool showCursor = true;
 
         // Ensure we wait at least a frame to avoid infinite loops if delay is 0
-        if (step.delay <= 0) step.delay = 1f;
+        //if (step.delay <= 0) step.delay = 1f;
 
-        while (timeWaited < step.delay)
+        while ((timeWaited < step.delay || step.delay <= 0f) && !forceSkipWait)
         {
             screenText.text = showCursor ? current + cursorChar : current;
             showCursor = !showCursor;
             yield return new WaitForSeconds(blinkSpeed);
             timeWaited += blinkSpeed;
         }
+
+        forceSkipWait = false;
     }
 
     public void DoAddToList(string text, string delay)
     {
         float dly = float.Parse(delay);
         sequence.Add(new MessageStep() { delay = dly, state = SystemState.Info, text = text });
+
+        forceSkipWait = true;
     }
 
     public void DoRemoveItem(string index)
