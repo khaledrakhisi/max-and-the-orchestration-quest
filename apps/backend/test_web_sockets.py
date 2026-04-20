@@ -58,7 +58,7 @@ async def start_container(ws,container_name):
         result_object = {
             "container_name":container_object.name,
             "container_id":container_object.id,
-            "container_status": container_object.status
+            "container_status": "started"
         }
         print(result_object)
         await ws.send(json.dumps({"type":"start_container","response":result_object}))
@@ -72,7 +72,7 @@ async def stop_container(ws,container_name):
         result_object = {
             "container_name":container_object.name,
             "container_id":container_object.id,
-            "container_status": container_object.status
+            "container_status": "stopped"
         }
         print(result_object)
         await ws.send(json.dumps({"type":"stop_container","response":result_object}))
