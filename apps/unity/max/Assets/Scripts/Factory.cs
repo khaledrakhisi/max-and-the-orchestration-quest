@@ -10,6 +10,7 @@ public class Factory : MonoBehaviour
         Output,
     }
     public States state = States.Off;
+    private States prevState = States.Off;
     public Rotate2D gear1;
     public Rotate2D gear2;
     public Smoke smoke;
@@ -30,6 +31,20 @@ public class Factory : MonoBehaviour
     {
         if (state == States.Off)
         {
+            if (prevState == States.Input)
+            {
+                if (statusPosted)
+                {
+                    statusPosted = false;
+                }
+                if (!statusPosted && infoBoard)
+                {
+                    infoBoard.DoShowOneMessage(">>> Error: No Image Found!", "Danger");
+                    prevState = state;
+                    Debug.Log("here");
+                }
+            }
+
             if (gear1)
                 gear1.isOn = false;
             if (gear2)
@@ -43,8 +58,9 @@ public class Factory : MonoBehaviour
         {
             if (!statusPosted && infoBoard)
             {
-                infoBoard.DoShowOneMessage("* now in input mode ...", "Warning");
+                infoBoard.DoShowOneMessage(">>> Now Converting Image to Container . . . . . . . . . . . . . .", "Warning");
                 statusPosted = true;
+                prevState = state;
             }
             if (gear1)
             {
@@ -67,6 +83,19 @@ public class Factory : MonoBehaviour
         }
         else if (state == States.Output)
         {
+            if (prevState == States.Input)
+            {
+                if (statusPosted)
+                {
+                    statusPosted = false;
+                }
+                if (!statusPosted && infoBoard)
+                {
+                    infoBoard.DoShowOneMessage(">>> Image Converted to Container Successfully", "Success");
+                    statusPosted = true;
+                    prevState = state;
+                }
+            }
             if (gear1)
             {
                 gear1.isOn = true;
