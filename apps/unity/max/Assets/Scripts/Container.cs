@@ -16,7 +16,7 @@ public class Container : MonoBehaviour
     // Start is called once before the first execution of Update after the MonoBehaviour is created
     void Start()
     {
-
+        gameObject.tag = "container_block";
     }
 
     // Update is called once per frame

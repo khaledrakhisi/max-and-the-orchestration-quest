@@ -1,8 +1,7 @@
 import asyncio
 import websockets
-import time
-import random
 import json
+import random
 import docker
 import threading
 
@@ -39,7 +38,9 @@ def get_container_stats(container_name):
 
 async def create_container(ws,image_name,cpus,memory):
     try:
-        container_object=client.containers.create(name= image_name[-6:]+"_container",image=image_name,detach=True,ports= {'80/tcp': 8080},cpu_count=cpus,mem_limit=str(memory)+"m")
+        # invalid container name issue so used last 6 charactes
+        container_name = image_name.split("/")[1]
+        container_object=client.containers.create(name= container_name+"_container",image=image_name,detach=True,ports= {'80/tcp': 8080},cpu_count=cpus,mem_limit=str(memory)+"m")
         result_object = {
             "container_name":container_object.name,
             "container_id":container_object.id,
@@ -57,7 +58,7 @@ async def start_container(ws,container_name):
         result_object = {
             "container_name":container_object.name,
             "container_id":container_object.id,
-            "container_status": container_object.status
+            "container_status": "started"
         }
         print(result_object)
         await ws.send(json.dumps({"type":"start_container","response":result_object}))
@@ -71,7 +72,7 @@ async def stop_container(ws,container_name):
         result_object = {
             "container_name":container_object.name,
             "container_id":container_object.id,
-            "container_status": container_object.status
+            "container_status": "stopped"
         }
         print(result_object)
         await ws.send(json.dumps({"type":"stop_container","response":result_object}))
@@ -131,7 +132,7 @@ def pull_image_thread(websocket, image_name, done_event):
     try:
         images = client.images.list(all=True)
         for image in images:
-            if image_name == image.tags[0]:
+            if image_name == image.tags[0].split(":")[0]:
                 asyncio.run_coroutine_threadsafe(
                         websocket.send(json.dumps({"status": "failed", "message": f"{image_name} is already present"})),
                         MAIN_LOOP
@@ -206,13 +207,7 @@ async def stream_stats(ws, container):
             return
         await asyncio.sleep(1)
 
-# async def send_threadsafe(ws, data):
-#     """Ensures WebSocket send works from thread context."""
-#     if ws.closed:
-#         return
-#     await ws.send(json.dumps(data))
 
-# ---- MAIN WEBSOCKET HANDLER ---- #
 async def handler(websocket):
     tasks = []
 
@@ -276,7 +271,11 @@ async def handler(websocket):
             # thread = threading.Thread(target=pull_image_thread, args=(websocket, image))
             # thread.start()
             image_chunks = message.split(":")
-            image_name = image_chunks[1] +":"+ image_chunks[2]
+            image_name = ""
+            if len(image_chunks)>2:
+                image_name = image_chunks[1] +":"+ image_chunks[2]
+            else:
+                image_name = image_chunks[1] 
 
             # event to track completion
             done_event = threading.Event()

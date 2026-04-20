@@ -31,6 +31,19 @@ public class ImageDownloaderDevice : MonoBehaviour
     public static bool hasImages = false;
     private bool isWaiting = false;
 
+    public static ImageDownloaderDevice Instance;
+
+    private void Awake()
+    {
+        if (Instance != null && Instance != this)
+        {
+            Destroy(gameObject);
+            return;
+        }
+
+        Instance = this;
+    }
+
     public class DockerImage
     {
         public string image_id;
@@ -50,10 +63,16 @@ public class ImageDownloaderDevice : MonoBehaviour
         // traefik/whoami                                    latest      6fee7566e427   9 months ago   7.16MB
         // grafana/grafana                                   10.2.3      8387f19108f9   2 years ago    399MB        
 
+//              "pihole/pihole 147mb",
+//                 "nginx 400mb",
+//                 "rarenicks/alphine 7mb",
+//                 "excalidraw/excalidraw 144mb",
+//                 "uzyexe/tetris 100mb",
+
         AvailableImages = new string[] {
+                "rarenicks/alphine",
                 "pihole/pihole",
                 "nginx",
-                "rarenicks/alphine",
                 "excalidraw/excalidraw",
                 "uzyexe/tetris",
         };
