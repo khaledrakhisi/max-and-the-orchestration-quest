@@ -84,6 +84,9 @@ public class Thing
 	/// The trigger at.
 	/// </summary>
 	public float triggerAt = 0f;
+
+	[System.NonSerialized]
+	public bool hasRun = false;
 }
 
 public class Director : MonoBehaviour
@@ -166,7 +169,9 @@ public class Director : MonoBehaviour
 				Destroy(gameObject);
 		}
 
-		if (startTimer && timeElapsed < biggestTriggerTime && !isAllTaskPerfomed)
+		// if (startTimer && timeElapsed < biggestTriggerTime && !isAllTaskPerfomed)
+		// 	timeElapsed += Time.deltaTime;
+		if (startTimer && !isAllTaskPerfomed)
 			timeElapsed += Time.deltaTime;
 
 		else
@@ -183,13 +188,24 @@ public class Director : MonoBehaviour
 					triggered = false;
 					//isAllTaskPerfomed = false;
 					//startTimer = false;
+
+					foreach (var t in things)
+					{
+						t.hasRun = false;
+					}
 				}
 
 			}
 			if (!loop)
 				startTimer = false;
 			else
+			{
 				isAllTaskPerfomed = false;
+				foreach (var t in things)
+				{
+					t.hasRun = false;
+				}
+			}
 
 		}
 
@@ -255,14 +271,36 @@ public class Director : MonoBehaviour
 			startTimer = true;
 
 		}
-		else if ((!collidedObject && atDirectorZone) || (!collidedObject && isAllTaskPerfomed))
-		{
-			atDirectorZone = false;
+		// else if ((!collidedObject && atDirectorZone) || (!collidedObject && isAllTaskPerfomed))
+		// {
+		// 	atDirectorZone = false;
 
-			if (!applyOnce)
+		// 	if (!applyOnce)
+		// 	{
+		// 		triggered = false;
+		// 		isAllTaskPerfomed = false;
+
+		// 		foreach (var t in things)
+		// 		{
+		// 			t.hasRun = false;
+		// 		}
+		// 	}
+		// }
+		else if (!collidedObject && atDirectorZone)
+		{
+			// 1. Only track that the player stepped out. Do NOT reset the tasks yet!
+			atDirectorZone = false;
+		}
+
+		// 2. ONLY re-arm the Director if the sequence is completely finished AND the player has left the zone
+		if (!applyOnce && isAllTaskPerfomed && !atDirectorZone)
+		{
+			triggered = false;
+			isAllTaskPerfomed = false;
+
+			foreach (var t in things)
 			{
-				triggered = false;
-				isAllTaskPerfomed = false;
+				t.hasRun = false;
 			}
 		}
 
@@ -278,38 +316,60 @@ public class Director : MonoBehaviour
 		//    }
 		//}
 
-		nowClockTik = Mathf.Round(timeElapsed * 10.0f) / 10.0f;
-		//Debug.Log (nowClockTik + "  " + prevClockTik);
-		if (startTimer && nowClockTik != prevClockTik)
+		// nowClockTik = Mathf.Round(timeElapsed * 10.0f) / 10.0f;
+		// //Debug.Log (nowClockTik + "  " + prevClockTik);
+		// if (startTimer && nowClockTik != prevClockTik)
+		// {
+		// 	foreach (var thing in things)
+		// 	{
+
+		// 		// Skip And Ignore The Rest If CheckPoint Or Temporary Checkpoint Exist
+		// 		//				if ((checkpoint != null && checkpoint.isSaved) ||
+		// 		//				    (CrossSceneInfo.checkppointTemp != null && CrossSceneInfo.checkppointTemp.isSaved)
+		// 		//				    && currentTaskIndex > 0) {
+		// 		//					Debug.Log ("Director : Any task after checkpoint loading will be ignored!");
+		// 		//					break;
+		// 		//				}
+		// 		if ((checkpoint != null && checkpoint.isSaved) && currentTaskIndex > 0)
+		// 		{
+		// 			Debug.Log("Director " + this.name + " : Any task after checkpoint loading will be ignored!");
+		// 			startTimer = false;
+		// 			break;
+		// 		}
+
+		// 		if (nowClockTik >= thing.triggerAt && !isAllTaskPerfomed)
+		// 		{
+		// 			PerformATask(thing);
+		// 			currentTaskIndex++;
+		// 			//Debug.Log ("ran " + thing.target + thing.memberValueX);
+		// 		}
+		// 	}
+
+		// 	prevClockTik = nowClockTik;
+		// }
+
+		if (startTimer && !isAllTaskPerfomed)
 		{
-			foreach (var thing in things)
+			for (int i = 0; i < things.Length; i++)
 			{
+				var thing = things[i];
 
-				// Skip And Ignore The Rest If CheckPoint Or Temporary Checkpoint Exist
-				//				if ((checkpoint != null && checkpoint.isSaved) ||
-				//				    (CrossSceneInfo.checkppointTemp != null && CrossSceneInfo.checkppointTemp.isSaved)
-				//				    && currentTaskIndex > 0) {
-				//					Debug.Log ("Director : Any task after checkpoint loading will be ignored!");
-				//					break;
-				//				}
-				if ((checkpoint != null && checkpoint.isSaved) && currentTaskIndex > 0)
+				// If the time has passed the trigger point, AND it hasn't run yet
+				if (!thing.hasRun && timeElapsed >= thing.triggerAt)
 				{
-					Debug.Log("Director " + this.name + " : Any task after checkpoint loading will be ignored!");
-					startTimer = false;
-					break;
-				}
+					// if (checkpoint != null && checkpoint.isSaved && currentTaskIndex > 0)
+					// {
+					// 	Debug.Log("Director " + this.name + " : Any task after checkpoint loading will be ignored!");
+					// 	startTimer = false;
+					// 	break;
+					// }
 
-				if (nowClockTik == thing.triggerAt && !isAllTaskPerfomed)
-				{
 					PerformATask(thing);
+					thing.hasRun = true; // Mark as run so it doesn't fire every frame
 					currentTaskIndex++;
-					//Debug.Log ("ran " + thing.target + thing.memberValueX);
 				}
 			}
-
-			prevClockTik = nowClockTik;
 		}
-
 	}
 
 	private void PerformATask(Thing thing)
@@ -497,6 +557,7 @@ public class Director : MonoBehaviour
 		{
 			currentTaskIndex++;
 			timeElapsed = things[currentTaskIndex].triggerAt;
+			things[currentTaskIndex].hasRun = true;
 		}
 	}
 
