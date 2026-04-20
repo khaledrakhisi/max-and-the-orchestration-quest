@@ -116,6 +116,16 @@ public class InfoBoard : MonoBehaviour
         forceSkipWait = false;
     }
 
+    public void DoShowOneMessage(string text, string state)
+    {
+        // clear the list to show only one single message with 0.0f delay
+        sequence.Clear();
+        Enum.TryParse(state, out SystemState result);
+        sequence.Add(new MessageStep() { delay = 0f, state = result, text = text });
+
+        forceSkipWait = true;
+    }
+
     public void DoAddToList(string text, string delay)
     {
         float dly = float.Parse(delay);
