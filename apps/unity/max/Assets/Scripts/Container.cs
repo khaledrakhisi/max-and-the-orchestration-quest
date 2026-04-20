@@ -25,10 +25,12 @@ public class Container : MonoBehaviour
         if (cpu != cpu7seg.displayValue)
         {
             cpu7seg.displayValue = cpu;
+            Debug.Log($"cpu: {cpu7seg.displayValue}");
         }
         if (ram != ram7seg.displayValue)
         {
             ram7seg.displayValue = ram;
+            Debug.Log($"ram: {ram7seg.displayValue}");
         }
         if (disk != disk7seg.displayValue)
         {

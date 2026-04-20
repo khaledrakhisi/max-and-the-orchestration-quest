@@ -39,6 +39,7 @@ public class SevenSegment : MonoBehaviour
         GenerateDisplay();
 
         // Set the initial starting value
+        Debug.Log($"awake display value: {displayValue}");
         DoSetNumber(displayValue.ToString());
     }
 
@@ -47,6 +48,8 @@ public class SevenSegment : MonoBehaviour
         // If the variable was changed (e.g., via Inspector or another script), update the visuals
         if (displayValue != lastDisplayValue)
         {
+        Debug.Log($"update display value: {displayValue}");
+
             DoSetNumber(displayValue.ToString());
         }
     }
@@ -135,6 +138,7 @@ public class SevenSegment : MonoBehaviour
 
     public void DoSetNumber(string number)
     {
+        // Debug.Log($"do_set_number: {number}");
         if (allDigits.Count == 0) return;
 
         // Try to parse the string to an int. If successful, sync our tracking variables
