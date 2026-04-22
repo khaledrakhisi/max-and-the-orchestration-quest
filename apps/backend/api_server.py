@@ -2,10 +2,13 @@ from dotenv import load_dotenv
 from fastapi import FastAPI, HTTPException, status
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel, EmailStr, Field
-from datetime import timedelta
+from datetime import timedelta, datetime
 from repositories.user_repository import UserRepository
+from repositories.mission_repository import MissionRepository
 from domain.authentication import hash_password, verify_password, create_access_token, normalize_password
+from domain.missions import MissionDomain
 from models.user import User
+from models.mission import MissionStatus
 from bson.errors import InvalidId
 import os
 
@@ -19,6 +22,8 @@ DATABASE_NAME = "max"
 SECRET_KEY = os.getenv("SECRET_KEY")
 ALGORITHM = os.getenv("ALGORITHM", "HS256")
 ACCESS_TOKEN_EXPIRE_MINUTES = int(os.getenv("ACCESS_TOKEN_EXPIRE_MINUTES", 30))
+PRIMARY_USER_ID = os.getenv("PRIMARY_USER_ID", "693843f9a8cdbf214cd36a62")
+PRIMARY_USER_EMAIL = os.getenv("PRIMARY_USER_EMAIL", "player1@example.com")
 
 # Initialize FastAPI app
 app = FastAPI(title="Max Authentication API", version="1.0.0")
@@ -34,6 +39,8 @@ app.add_middleware(
 
 # Initialize repository
 user_repo = UserRepository(CONNECTION_STRING, DATABASE_NAME)
+mission_repo = MissionRepository(CONNECTION_STRING, DATABASE_NAME)
+mission_domain = MissionDomain(mission_repo, user_repo, primary_user_id=PRIMARY_USER_ID)
 
 
 # Pydantic models for requests/responses
@@ -76,6 +83,51 @@ class UserUpdateRequest(BaseModel):
     password: str | None = Field(default=None, min_length=8, max_length=100)
     totalXP: int | None = None
     level: int | None = None
+
+
+class MissionResponse(BaseModel):
+    id: str
+    userId: str
+    missionId: str
+    missionName: str
+    status: MissionStatus
+    startedAt: datetime | None = None
+    completedAt: datetime | None = None
+    missionXP: int
+
+
+class MissionCompleteResponse(BaseModel):
+    mission: MissionResponse
+    userTotalXP: int
+
+
+def _serialize_mission(mission) -> dict:
+    return {
+        "id": str(mission.id),
+        "userId": str(mission.userId),
+        "missionId": mission.missionId,
+        "missionName": mission.missionName,
+        "status": mission.status,
+        "startedAt": mission.startedAt,
+        "completedAt": mission.completedAt,
+        "missionXP": mission.missionXP,
+    }
+
+
+def _get_primary_user():
+    if PRIMARY_USER_ID:
+        try:
+            user_by_id = user_repo.get_by_id(PRIMARY_USER_ID)
+            if user_by_id:
+                return user_by_id
+        except InvalidId:
+            pass
+
+    user_by_email = user_repo.get_by_email(PRIMARY_USER_EMAIL)
+    if user_by_email:
+        return user_by_email
+
+    return None
 
 
 @app.get("/")
@@ -208,6 +260,21 @@ async def list_users():
     ]
 
 
+@app.get("/user", response_model=UserResponse)
+async def get_primary_user():
+    user = _get_primary_user()
+    if not user:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Primary user not found")
+
+    return {
+        "id": str(user.id),
+        "username": user.username,
+        "email": user.email,
+        "totalXP": user.totalXP,
+        "level": user.level,
+    }
+
+
 @app.get("/users/{user_id}", response_model=UserResponse)
 async def get_user(user_id: str):
     try:
@@ -305,6 +372,52 @@ async def delete_user(user_id: str):
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="User not found")
 
     return None
+
+
+@app.get("/missions", response_model=list[MissionResponse])
+async def list_missions():
+    missions = mission_domain.get_all_missions()
+    return [_serialize_mission(mission) for mission in missions]
+
+
+@app.get("/missions/{mission_id}", response_model=MissionResponse)
+async def get_mission(mission_id: str):
+    mission = mission_domain.get_mission_by_id(mission_id)
+    if not mission:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Mission not found")
+
+    return _serialize_mission(mission)
+
+
+@app.post("/missions/{mission_id}/start", response_model=MissionResponse)
+async def start_mission(mission_id: str):
+    try:
+        mission = mission_domain.start_mission(mission_id)
+    except ValueError as exc:
+        message = str(exc)
+        status_code = status.HTTP_404_NOT_FOUND if "not found" in message.lower() else status.HTTP_400_BAD_REQUEST
+        raise HTTPException(status_code=status_code, detail=message)
+    except RuntimeError as exc:
+        raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail=str(exc))
+
+    return _serialize_mission(mission)
+
+
+@app.post("/missions/{mission_id}/complete", response_model=MissionCompleteResponse)
+async def complete_mission(mission_id: str):
+    try:
+        completed_mission, user_total_xp = mission_domain.complete_mission(mission_id)
+    except ValueError as exc:
+        message = str(exc)
+        status_code = status.HTTP_404_NOT_FOUND if "not found" in message.lower() else status.HTTP_400_BAD_REQUEST
+        raise HTTPException(status_code=status_code, detail=message)
+    except RuntimeError as exc:
+        raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail=str(exc))
+
+    return {
+        "mission": _serialize_mission(completed_mission),
+        "userTotalXP": user_total_xp,
+    }
 
 
 if __name__ == "__main__":
