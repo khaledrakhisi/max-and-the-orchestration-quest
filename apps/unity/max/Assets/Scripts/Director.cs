@@ -868,7 +868,6 @@ public class Director : MonoBehaviour
 
 	void OnDrawGizmos()
 	{
-
 		if (triggerTargetIsFixedInPlace)
 			debugCollisionColor = Color.magenta;
 		else
