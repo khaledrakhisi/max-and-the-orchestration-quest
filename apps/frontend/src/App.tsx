@@ -18,20 +18,30 @@ function App() {
 
   useEffect(() => {
     const handleInteraction = () => {
-      if (audioRef.current && audioRef.current.paused) {
+      if (currentView !== 'GAME' && audioRef.current && audioRef.current.paused) {
         audioRef.current.play().catch(e => console.log("Audio play failed:", e));
       }
     };
     document.addEventListener('click', handleInteraction);
     return () => document.removeEventListener('click', handleInteraction);
-  }, []);
+  }, [currentView]);
+
+  useEffect(() => {
+    if (audioRef.current) {
+      if (currentView === 'GAME') {
+        audioRef.current.pause();
+      } else {
+        audioRef.current.play().catch(e => console.log("Audio play failed:", e));
+      }
+    }
+  }, [currentView]);
 
   const renderMenu = () => (
     <div className="main-menu-container">
       <div className="menu-buttons">
         <button className="retro-btn" onClick={() => {
-          if (audioRef.current && audioRef.current.paused) {
-            audioRef.current.play().catch(e => console.log(e));
+          if (audioRef.current) {
+            audioRef.current.pause();
           }
           setCurrentView('GAME');
         }}>
@@ -65,22 +75,22 @@ function App() {
     <div className="view-container">
       <div className="pixel-box" style={{ width: '800px', padding: '40px', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '40px', boxSizing: 'border-box' }}>
         <h2 style={{ color: 'var(--retro-accent)', margin: 0, textShadow: '2px 2px 0 var(--retro-black)' }}>SELECT LEVEL</h2>
-        
+
         <div style={{ display: 'flex', gap: '30px', justifyContent: 'center', width: '100%' }}>
           {[
             { id: 1, name: 'DOCKER SEAS', status: 'UNLOCKED' },
             { id: 2, name: 'KUBE MOUNTAIN', status: 'LOCKED' },
             { id: 3, name: 'CLOUD FORTRESS', status: 'LOCKED' },
           ].map((level) => (
-            <div 
-              key={level.id} 
-              className="pixel-box" 
-              style={{ 
-                flex: 1, 
-                height: '200px', 
-                display: 'flex', 
-                flexDirection: 'column', 
-                alignItems: 'center', 
+            <div
+              key={level.id}
+              className="pixel-box"
+              style={{
+                flex: 1,
+                height: '200px',
+                display: 'flex',
+                flexDirection: 'column',
+                alignItems: 'center',
                 justifyContent: 'center',
                 gap: '15px',
                 cursor: level.status === 'UNLOCKED' ? 'pointer' : 'not-allowed',
@@ -89,15 +99,15 @@ function App() {
                 backgroundColor: level.status === 'UNLOCKED' ? '#222' : 'var(--retro-black)'
               }}
               onClick={() => {
-                if(level.status === 'UNLOCKED') {
+                if (level.status === 'UNLOCKED') {
                   setCurrentView('GAME');
                 }
               }}
             >
               <h3 style={{ margin: 0, fontSize: '1.5rem', color: 'var(--retro-accent)' }}>{level.id}</h3>
               <div style={{ fontSize: '0.8rem', textAlign: 'center', height: '40px', display: 'flex', alignItems: 'center' }}>{level.name}</div>
-              <div style={{ 
-                fontSize: '0.7rem', 
+              <div style={{
+                fontSize: '0.7rem',
                 color: level.status === 'UNLOCKED' ? '#0f0' : '#f00',
                 marginTop: 'auto'
               }}>
@@ -123,18 +133,18 @@ function App() {
             MUSIC VOLUME: {Math.round(volume * 100)}%
           </label>
           <div style={{ display: 'flex', alignItems: 'center', gap: '15px' }}>
-            <input 
-              type="range" 
-              min="0" 
-              max="1" 
-              step="0.01" 
-              value={volume} 
+            <input
+              type="range"
+              min="0"
+              max="1"
+              step="0.01"
+              value={volume}
               onChange={(e) => setVolume(parseFloat(e.target.value))}
               style={{ width: '300px', cursor: 'pointer', opacity: isMuted ? 0.5 : 1 }}
               disabled={isMuted}
             />
-            <button 
-              className="retro-btn" 
+            <button
+              className="retro-btn"
               style={{ fontSize: '1.2rem', padding: '10px', minWidth: '50px', display: 'flex', justifyContent: 'center', alignItems: 'center' }}
               onClick={() => setIsMuted(!isMuted)}
               title={isMuted ? 'Unmute' : 'Mute'}
@@ -153,7 +163,7 @@ function App() {
   const mockLeaderboard = [
     { rank: 1, name: 'MAX', score: 999990 },
     { rank: 2, name: 'KHL', score: 852000 },
-    { rank: 3, name: 'JON', score: 720450 },
+    { rank: 3, name: 'AAB', score: 720450 },
     { rank: 4, name: 'SAM', score: 504000 },
     { rank: 5, name: 'AAA', score: 100000 },
   ];
@@ -162,7 +172,7 @@ function App() {
     <div className="view-container">
       <div className="pixel-box" style={{ width: '600px', height: '500px', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'flex-start', padding: '40px', gap: '20px', boxSizing: 'border-box' }}>
         <h2 style={{ color: 'var(--retro-accent)', margin: 0, textShadow: '2px 2px 0 var(--retro-black)' }}>HIGH SCORES</h2>
-        
+
         <table style={{ width: '85%', color: 'var(--retro-text)', borderCollapse: 'collapse', marginTop: '10px', fontSize: '1.2rem', textAlign: 'center' }}>
           <thead>
             <tr style={{ borderBottom: '4px solid var(--retro-border)' }}>

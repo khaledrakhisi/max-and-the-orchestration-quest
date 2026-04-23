@@ -53,9 +53,9 @@ public class ObjectSpawner : MonoBehaviour
 		rotationZ = Random.Range(rotationZRange.x, rotationZRange.y);
 	}
 
-	public void DoSpawn()
+	public GameObject DoSpawn()
 	{
 		var newTransform = transform;
-		Instantiate(prefabs[Random.Range(0, prefabs.Length)], newTransform.position, Quaternion.Euler(0f, 0f, rotationZ));
+		return Instantiate(prefabs[Random.Range(0, prefabs.Length)], newTransform.position, Quaternion.Euler(0f, 0f, rotationZ));
 	}
 }

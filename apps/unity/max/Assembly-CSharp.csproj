@@ -135,6 +135,7 @@
     <Compile Include="Assets\Scripts\StickToRope.cs" />
     <Compile Include="Assets\RainMaker\Prefab\BaseRainScript.cs" />
     <Compile Include="Assets\RainMaker\Demo\DemoScript2D.cs" />
+    <Compile Include="Assets\Scripts\DockerImage.cs" />
     <Compile Include="Assets\Scripts\FaceDirection.cs" />
     <Compile Include="Assets\Scripts\MovingWall.cs" />
     <Compile Include="Assets\Scripts\CollectableObject.cs" />
@@ -206,6 +207,7 @@
     <Compile Include="Assets\Scripts\Rotate2D.cs" />
     <Compile Include="Assets\Scripts\ObjectPhysics.cs" />
     <Compile Include="Assets\Scripts\RadialRaysEffect.cs" />
+    <Compile Include="Assets\Scripts\ServerMachine.cs" />
     <Compile Include="Assets\Scripts\LedgeGrabbing.cs" />
     <Compile Include="Assets\Scripts\Languages.cs" />
     <Compile Include="Assets\Scripts\Camera2DFollow.cs" />
