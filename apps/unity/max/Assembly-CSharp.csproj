@@ -206,6 +206,7 @@
     <Compile Include="Assets\Scripts\Rotate2D.cs" />
     <Compile Include="Assets\Scripts\ObjectPhysics.cs" />
     <Compile Include="Assets\Scripts\RadialRaysEffect.cs" />
+    <Compile Include="Assets\Scripts\ServerMachine.cs" />
     <Compile Include="Assets\Scripts\LedgeGrabbing.cs" />
     <Compile Include="Assets\Scripts\Languages.cs" />
     <Compile Include="Assets\Scripts\Camera2DFollow.cs" />
