@@ -137,6 +137,8 @@ def pull_image_thread(websocket, client_id, image_name, done_event):
     try:
         for image in client.images.list(all=True):
             if image_name == image.tags[0].split(":")[0]:
+                print(image_name)
+                print(image.tags[0].split(":")[0])
                 asyncio.run_coroutine_threadsafe(
                     websocket.send(json.dumps({"status": "failed", "message": f"{image_name} is already present"})),
                     MAIN_LOOP
@@ -163,7 +165,7 @@ def pull_image_thread(websocket, client_id, image_name, done_event):
 
             if current_message != last_status:
                 asyncio.run_coroutine_threadsafe(
-                    websocket.send(json.dumps({"status": "pulling", "image": image_name, "detail": current_message})),
+                    websocket.send(json.dumps({"type": "image_pull","status": "pulling", "image": image_name, "detail": current_message})),
                     MAIN_LOOP
                 )
                 last_status = current_message
