@@ -13,6 +13,7 @@ using UnityEngine.UIElements;
 
 public class ImageDownloaderDevice : MonoBehaviour
 {
+    enum Status { Idle = 0, Triggered, Downloading, Finished, Failed }
     [SerializeField] private string[] AvailableImages;
     [SerializeField] private TextMeshProUGUI screenText;
     [SerializeField] private float typingSpeed = 0.05f;
@@ -25,16 +26,21 @@ public class ImageDownloaderDevice : MonoBehaviour
     private bool isBusy = false;
     private int selectedIndex = 0;
     private float timeElapsed = 0.0f;
-    private bool isTriggered = false;
+    private Status status = Status.Idle;
     public static List<string> DockerImages = new();
-    public static bool hasImages = false;
+    // public static bool hasImages = false;
     private bool isWaiting = false;
 
-    public class DockerImage
+    public class Response
     {
-        public string image_id;
-        public string image_name;
+        public string type;
+        public string status;
+        public string image;
+        public string detail;
+        public string message;
     }
+
+    public Response response1;
 
     async void Start()
     {
@@ -66,10 +72,10 @@ public class ImageDownloaderDevice : MonoBehaviour
         UpdateDisplay(selectedImage);
 
         // --- SUBSCRIBE TO GLOBAL MESSAGES ---
-        // Tell the global manager: "Whenever you receive a message, trigger my PrintImages function"
+        // Tell the global manager: "Whenever you receive a message, trigger my ReceiveDataFromWebsocket function"
         if (WebSocketManager.Instance != null)
         {
-            WebSocketManager.Instance.OnMessageReceived += PrintImages;
+            WebSocketManager.Instance.OnMessageReceived += ReceiveDataFromWebsocket;
         }
         else
         {
@@ -82,27 +88,35 @@ public class ImageDownloaderDevice : MonoBehaviour
         // --- UNSUBSCRIBE TO PREVENT MEMORY LEAKS ---        
         if (WebSocketManager.Instance != null)
         {
-            WebSocketManager.Instance.OnMessageReceived -= PrintImages;
+            WebSocketManager.Instance.OnMessageReceived -= ReceiveDataFromWebsocket;
         }
     }
 
     /// <summary>
     /// Triggered automatically by WebSocketManager when data arrives.
     /// </summary>
-    void PrintImages(string message)
+    void ReceiveDataFromWebsocket(string message)
     {
         try
         {
             // Attempt to parse the message. 
-            // Note: If you have multiple objects listening, you should check the message
-            // to ensure it's actually meant for this downloader (e.g., check for a "type" field)
-            List<DockerImage> images = JsonConvert.DeserializeObject<List<DockerImage>>(message);
+            response1 = JsonConvert.DeserializeObject<Response>(message);
 
-            if (images != null)
+            if (response1 != null && response1.status == "pulling")
             {
-                screenText.text = "";
-                hasImages = true;
-                Debug.Log($"Successfully parsed {images.Count} docker images.");
+                status = Status.Triggered;
+                screenText.text = "pulling ...";
+                // hasImages = true;
+                //Debug.Log($"Successfully parsed {response1.image} docker images.");
+            }
+            else if (response1 != null && response1.status == "ok")
+            {
+                status = Status.Downloading;
+            }
+            else if (response1 == null || response1.status == "failed")
+            {
+                status = Status.Failed;
+                screenText.text = response1.message;
             }
         }
         catch (Exception e)
@@ -114,24 +128,40 @@ public class ImageDownloaderDevice : MonoBehaviour
 
     void Update()
     {
-        if (isTriggered)
+        if (status == Status.Downloading || status == Status.Finished)
             timeElapsed += Time.deltaTime;
 
-        if (timeElapsed > 3f)
+        if (status == Status.Downloading)
         {
-            timeElapsed = 0f;
-            isTriggered = false;
-
-            if (spawner)
+            if (orbitBall)
             {
-                spawner.DoSpawn();
-                isBusy = true;
+                orbitBall.DoRunAnimation("1");
             }
+
+            if (timeElapsed >= 4f)
+            {
+                status = Status.Finished;
+                if (spawner)
+                {
+                    GameObject dockerImage = spawner.DoSpawn();
+                    if (dockerImage)
+                    {
+                        isBusy = true;
+                        dockerImage.GetComponent<DockerImage>().DoSetName(response1.image);
+                    }
+                    UpdateDisplay("Recovering ...");
+                }
+            }
+        }
+
+        if (timeElapsed >= 7f && status == Status.Finished)
+        {
+            status = Status.Idle;
             if (orbitBall)
             {
                 orbitBall.DoRunAnimation("0");
             }
-            UpdateDisplay("Recovering ...");
+            timeElapsed = 0f;
         }
     }
 
@@ -175,14 +205,11 @@ public class ImageDownloaderDevice : MonoBehaviour
         }
 
         UpdateDisplay("Downloading ...");
-        isTriggered = true;
-        if (orbitBall)
-        {
-            orbitBall.DoRunAnimation("1");
-        }
+
+        status = Status.Triggered;
 
         // --- SEND COMMAND USING SINGLETON ---
-        WebSocketManager.Instance.SendMessageToServer("pull_image:alpine");
+        WebSocketManager.Instance.SendMessageToServer($"pull_image:{selectedImage}");
     }
 
     public void DoReset()
