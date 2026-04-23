@@ -13,7 +13,7 @@ load_dotenv()
 
 # ---- INIT ---- #
 log = setup_logging(mongo_uri=os.environ["MONGO_URI"])
-client = docker.from_env()
+client = docker.DockerClient(base_url='tcp://localhost:2375')
 MAIN_LOOP = None
 
 
