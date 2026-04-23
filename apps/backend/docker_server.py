@@ -34,6 +34,7 @@ def get_container_stats(container_name):
 
     return {
         "type": "container_stats",
+        "status":"ok",
         "container": container_name,
         "status": container.status,
         "cpu_percent": cpu_percent,
@@ -60,10 +61,10 @@ async def create_container(ws, client_id, image_name, cpus, memory):
             "container_name": obj.name,
             "container_id": obj.id,
             "container_status": obj.status
-        }}))
+        },"status":"ok"}))
     except Exception as e:
         log.error("Container creation failed", extra={"client_id": client_id, "image": image_name, "error": str(e)})
-        await ws.send(json.dumps({"type": "create_container", "status": "cannot create the container", "message": str(e)}))
+        await ws.send(json.dumps({"type": "create_container", "status": "failed", "message": str(e)}))
 
 
 async def start_container(ws, client_id, container_name):
@@ -75,10 +76,10 @@ async def start_container(ws, client_id, container_name):
             "container_name": obj.name,
             "container_id": obj.id,
             "container_status": "started"
-        }}))
+        },"status":"ok"}))
     except Exception as e:
         log.error("Container start failed", extra={"client_id": client_id, "container": container_name, "error": str(e)})
-        await ws.send(json.dumps({"type": "start_container", "status": "cannot start the container", "message": str(e)}))
+        await ws.send(json.dumps({"type": "start_container", "status": "failed", "message": str(e)}))
 
 
 async def stop_container(ws, client_id, container_name):
@@ -90,10 +91,10 @@ async def stop_container(ws, client_id, container_name):
             "container_name": obj.name,
             "container_id": obj.id,
             "container_status": "stopped"
-        }}))
+        },"status":"ok"}))
     except Exception as e:
         log.error("Container stop failed", extra={"client_id": client_id, "container": container_name, "error": str(e)})
-        await ws.send(json.dumps({"type": "stop_container", "status": "cannot stop the container", "message": str(e)}))
+        await ws.send(json.dumps({"type": "stop_container", "status": "failed", "message": str(e)}))
 
 
 async def remove_container(ws, client_id, container_name):
@@ -101,10 +102,10 @@ async def remove_container(ws, client_id, container_name):
         obj = client.containers.get(container_name)
         obj.remove()
         log.info("Container removed", extra={"client_id": client_id, "container": container_name})
-        await ws.send(json.dumps({"type": "remove_container", "message": "container " + container_name + " is removed"}))
+        await ws.send(json.dumps({"type": "remove_container","status":"ok", "message": "container " + container_name + " is removed"}))
     except Exception as e:
         log.error("Container removal failed", extra={"client_id": client_id, "container": container_name, "error": str(e)})
-        await ws.send(json.dumps({"type": "remove_container", "status": "cannot remove the container", "message": str(e)}))
+        await ws.send(json.dumps({"type": "remove_container", "status": "failed", "message": str(e)}))
 
 
 async def remove_image(ws, client_id, image_name):
@@ -112,22 +113,30 @@ async def remove_image(ws, client_id, image_name):
         obj = client.images.get(image_name)
         obj.remove()
         log.info("Image removed", extra={"client_id": client_id, "image": image_name})
-        await ws.send(json.dumps({"type": "remove_image", "message": "image " + image_name + " is removed"}))
+        await ws.send(json.dumps({"type": "remove_image","status":"ok", "message": "image " + image_name + " is removed"}))
     except Exception as e:
         log.error("Image removal failed", extra={"client_id": client_id, "image": image_name, "error": str(e)})
-        await ws.send(json.dumps({"type": "remove_image", "status": "cannot remove the image", "message": str(e)}))
+        await ws.send(json.dumps({"type": "remove_image", "status": "failed", "message": str(e)}))
 
 
 async def get_container_list(ws, client_id):
-    containers = client.containers.list(all=True)
-    container_list = [{"container_id": c.id, "container_name": c.name, "container_status": c.status} for c in containers]
-    await ws.send(json.dumps({"type": "container_list", "response": container_list}))
+    try:
+        containers = client.containers.list(all=True)
+        container_list = [{"container_id": c.id, "container_name": c.name, "container_status": c.status} for c in containers]
+        await ws.send(json.dumps({"type": "container_list","status":"ok", "response": container_list}))
+    except Exception as e:
+        log.error("get container failed", extra={"client_id": client_id, "image": image_name, "error": str(e)})
+        await ws.send(json.dumps({"type": "container_list", "status": "failed", "message": str(e)}))
 
 
 async def get_image_list(ws, client_id):
-    images = client.images.list(all=True)
-    image_list = [{"image_id": i.id, "image_name": i.tags[0]} for i in images]
-    await ws.send(json.dumps({"type": "image_list", "response": image_list}))
+    try:
+        images = client.images.list(all=True)
+        image_list = [{"image_id": i.id, "image_name": i.tags[0]} for i in images]
+        await ws.send(json.dumps({"type": "image_list","status":"ok", "response": image_list}))
+    except Exception as e:
+        log.error("get image list", extra={"client_id": client_id, "image": image_name, "error": str(e)})
+        await ws.send(json.dumps({"type": "image_list", "status": "failed", "message": str(e)}))
 
 
 # ---- IMAGE PULL ---- #
@@ -172,7 +181,7 @@ def pull_image_thread(websocket, client_id, image_name, done_event):
 
         log.info("Image pulled", extra={"client_id": client_id, "image": image_name})
         asyncio.run_coroutine_threadsafe(
-            websocket.send(json.dumps({"status": "done", "image": image_name, "rss": [ram, cpu]})),
+            websocket.send(json.dumps({"status": "ok", "image": image_name, "rss": [ram, cpu]})),
             MAIN_LOOP
         )
     except Exception as e:
