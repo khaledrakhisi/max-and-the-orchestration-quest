@@ -77,11 +77,11 @@ public class ServerMachine : MonoBehaviour
     {
         if (fan1)
         {
-            fan1.RPM = containers.Count * 200f;
+            fan1.RPM = 2 * containers.Count * 200f;
         }
         if (fan2)
         {
-            fan2.RPM = containers.Count * 200f;
+            fan2.RPM = 2 * containers.Count * 200f;
         }
     }
 
