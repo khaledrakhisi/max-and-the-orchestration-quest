@@ -17,10 +17,11 @@ body {
   margin: 0;
   padding: 0;
   background-color: var(--retro-bg);
-  background-image: url('./assets/max_orchestration_bg.png');
-  background-size: 100% 100%;
-  background-position: center;
+  background-image: linear-gradient(rgba(26, 28, 44, 0.3), rgba(26, 28, 44, 0.3)), url('./assets/max_orchestration_bg.png');
+  background-size: contain;
   background-repeat: no-repeat;
+  background-attachment: fixed;
+  background-position: center;
   color: var(--retro-text);
   font-family: 'Press Start 2P', monospace;
   -webkit-font-smoothing: none;
