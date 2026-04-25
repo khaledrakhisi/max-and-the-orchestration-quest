@@ -67,7 +67,7 @@ public class Factory : MonoBehaviour
                     }
                     else
                     {
-                        infoBoard.DoShowOneMessage(">>> Error: Not enough resources collected to create container!\n\nRAM required: 128+\nCPU required: 1+", "Danger");
+                        infoBoard.DoShowOneMessage(">>> Error: Not enough resources collected to create container !\n\nRAM required: 128+\nCPU required: 1+", "Danger");
                         DoResetFactory();
                         return;
                     }
