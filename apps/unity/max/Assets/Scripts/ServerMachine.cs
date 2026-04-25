@@ -3,23 +3,18 @@ using UnityEngine;
 
 public class ServerMachine : MonoBehaviour
 {
-    private const string containerTag = "Docker-Container";
-    [SerializeField]
-    private LayerMask containerLayer;
+    enum Statuses { Idle = 0, Checking, Accepted, Rejected }
+    [SerializeField] private LayerMask containerLayer;
     public GameObject containerObject;
-    [SerializeField]
-    private Vector3 collisionCubePosition = Vector3.zero;
-    [SerializeField]
-    private Vector3 collisionCubeSize;
-    [SerializeField]
-    private InfoBoard infoBoard;
-    private readonly List<Container> containers;
-    [SerializeField]
-    private MoveToPoint serverDoor;
-    [SerializeField]
-    private Rotate2D fan1, fan2;
+    private const string containerTag = "Docker-Container";
+    private readonly List<Container> containers = new();
+    [SerializeField] private Vector3 collisionCubePosition = Vector3.zero;
+    [SerializeField] private Vector3 collisionCubeSize;
+    [SerializeField] private InfoBoard infoBoard;
+    [SerializeField] private MoveToPoint serverDoor;
+    [SerializeField] private Rotate2D fan1, fan2;
     private float timeElapsed = 0f;
-    private bool operationTriggered = false;
+    private Statuses status = Statuses.Idle;
     // Start is called once before the first execution of Update after the MonoBehaviour is created
     void Start()
     {
@@ -37,18 +32,16 @@ public class ServerMachine : MonoBehaviour
         if (collidedObject != null)
         {
             containerObject = collidedObject.gameObject;
+            if (status == Statuses.Idle) status = Statuses.Checking;
 
-            if (!operationTriggered) operationTriggered = true;
-
-            if (operationTriggered && timeElapsed > 3f)
+            if (timeElapsed > 3f && status == Statuses.Checking)
             {
                 // if some object other than a Docker-Container tag pushed into the server
                 if (!containerObject.CompareTag(containerTag))
                 {
                     // throw the wrong object out
                     containerObject.GetComponent<Rigidbody2D>().AddForceX(20f);
-                    operationTriggered = false;
-                    Debug.Log("Toss");
+                    status = Statuses.Rejected;
                 }
                 // if it's a Docker-Container, close the door to start the operation
                 else
@@ -56,32 +49,46 @@ public class ServerMachine : MonoBehaviour
                     if (serverDoor)
                     {
                         serverDoor.DoMove();
-                        operationTriggered = false;
+                        status = Statuses.Accepted;
                     }
                 }
             }
         }
 
-        if (operationTriggered)
+        if (status == Statuses.Checking)
             timeElapsed += Time.deltaTime;
-        else if (!operationTriggered && timeElapsed > 0f)
+        else if (status == Statuses.Rejected)
+        {
+            status = Statuses.Idle;
             timeElapsed = 0f;
+        }
+        else if (status == Statuses.Accepted)
+        {
+            if (containerObject)
+            {
+                DoDockContainer();
+                DirectorWorker dw = containerObject.GetComponent<DirectorWorker>();
+                if (dw) dw.DoDistroyObject();
+                timeElapsed = 0f;
+                status = Statuses.Idle;
+            }
+        }
     }
 
     private void UpdateInfoBoard()
     {
-        infoBoard.DoShowOneMessage("Docking Done!\n\nConts: " + containers.Count, "Info");
+        infoBoard.DoShowOneMessage("Docking Done!\n\nTotal: " + containers.Count, "Info");
     }
 
     private void UpdateFanSpeed()
     {
         if (fan1)
         {
-            fan1.RPM = 2 * containers.Count * 200f;
+            fan1.RPM = containers.Count * -400f;
         }
         if (fan2)
         {
-            fan2.RPM = 2 * containers.Count * 200f;
+            fan2.RPM = containers.Count * -400f;
         }
     }
 
