@@ -17,3 +17,5 @@ yarn-error.log*
 /apps/Backend/node_modules/
 /apps/Frontend/node_modules/
 /node_modules/
+__pycache__/
+*.pyc
