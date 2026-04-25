@@ -172,7 +172,9 @@ public class Director : MonoBehaviour
 		// if (startTimer && timeElapsed < biggestTriggerTime && !isAllTaskPerfomed)
 		// 	timeElapsed += Time.deltaTime;
 		if (startTimer && !isAllTaskPerfomed)
+		{
 			timeElapsed += Time.deltaTime;
+		}
 
 		else
 		{
@@ -495,7 +497,7 @@ public class Director : MonoBehaviour
 		}
 		catch (Exception ex)
 		{
-			Debug.Log("Error - Director (name=\"" + name + "\"; atTime=" + nowClockTik + ") :" + ex.Message);
+			Debug.Log("Error - Director (name=\"" + name + "\"; atTime=" + Convert.ToInt32(timeElapsed) + ") :" + ex.Message);
 		}
 	}
 

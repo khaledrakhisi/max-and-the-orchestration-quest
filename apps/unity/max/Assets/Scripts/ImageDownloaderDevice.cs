@@ -2,6 +2,7 @@ using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.IO;
+using System.Linq;
 using System.Net.WebSockets;
 using System.Text;
 using System.Threading;
@@ -23,24 +24,28 @@ public class ImageDownloaderDevice : MonoBehaviour
 
     private ClientWebSocket webSocket;
     public string selectedImage;
-    private bool isBusy = false;
     private int selectedIndex = 0;
     private float timeElapsed = 0.0f;
     private Status status = Status.Idle;
     public static List<string> DockerImages = new();
     // public static bool hasImages = false;
-    private bool isWaiting = false;
 
     public class Response
+    {
+        public string image_id;
+        public string image_name;
+    }
+    public class Results
     {
         public string type;
         public string status;
         public string image;
         public string detail;
         public string message;
+        public Response[] response;
     }
 
-    public Response response1;
+    public Results results;
 
     async void Start()
     {
@@ -81,6 +86,8 @@ public class ImageDownloaderDevice : MonoBehaviour
         {
             Debug.LogError("WebSocketManager Singleton is missing from the scene!");
         }
+
+        // DoSpawnDownloadedImages();
     }
 
     private void OnDestroy()
@@ -100,23 +107,39 @@ public class ImageDownloaderDevice : MonoBehaviour
         try
         {
             // Attempt to parse the message. 
-            response1 = JsonConvert.DeserializeObject<Response>(message);
+            results = JsonConvert.DeserializeObject<Results>(message);
 
-            if (response1 != null && response1.status == "pulling")
+            if (results != null && results.type == "image_pull")
             {
-                status = Status.Triggered;
-                screenText.text = "pulling ...";
-                // hasImages = true;
-                //Debug.Log($"Successfully parsed {response1.image} docker images.");
+                if (results.status == "pulling")
+                {
+                    status = Status.Triggered;
+                    screenText.text = "pulling ...";
+                    //Debug.Log($"Successfully parsed {response1.image} docker images.");
+                }
+                else if (results.status == "ok")
+                {
+                    status = Status.Downloading;
+                }
+                else if (results.status == "failed")
+                {
+                    status = Status.Failed;
+                    screenText.text = results.message;
+                }
             }
-            else if (response1 != null && response1.status == "ok")
+            else if (results != null && results.type == "image_list")
             {
-                status = Status.Downloading;
-            }
-            else if (response1 == null || response1.status == "failed")
-            {
-                status = Status.Failed;
-                screenText.text = response1.message;
+                foreach (Response res in results.response)
+                {
+                    if (spawner)
+                    {
+                        GameObject dockerImage = spawner.DoSpawn();
+                        if (dockerImage)
+                        {
+                            dockerImage.GetComponent<DockerImage>().DoSetName(res.image_name);
+                        }
+                    }
+                }
             }
         }
         catch (Exception e)
@@ -138,7 +161,7 @@ public class ImageDownloaderDevice : MonoBehaviour
                 orbitBall.DoRunAnimation("1");
             }
 
-            if (timeElapsed >= 4f)
+            if (timeElapsed >= 2f)
             {
                 status = Status.Finished;
                 if (spawner)
@@ -146,15 +169,14 @@ public class ImageDownloaderDevice : MonoBehaviour
                     GameObject dockerImage = spawner.DoSpawn();
                     if (dockerImage)
                     {
-                        isBusy = true;
-                        dockerImage.GetComponent<DockerImage>().DoSetName(response1.image);
+                        dockerImage.GetComponent<DockerImage>().DoSetName(results.image);
                     }
-                    UpdateDisplay("Recovering ...");
+                    DoReset();
                 }
             }
         }
 
-        if (timeElapsed >= 7f && status == Status.Finished)
+        if (timeElapsed >= 4f && status == Status.Finished)
         {
             status = Status.Idle;
             if (orbitBall)
@@ -198,12 +220,6 @@ public class ImageDownloaderDevice : MonoBehaviour
 
     public void DoDownloadImage()
     {
-        if (isBusy)
-        {
-            UpdateDisplay("* System busy! *");
-            return;
-        }
-
         UpdateDisplay("Downloading ...");
 
         status = Status.Triggered;
@@ -214,25 +230,24 @@ public class ImageDownloaderDevice : MonoBehaviour
 
     public void DoReset()
     {
-        isBusy = false;
         UpdateDisplay(selectedImage);
     }
 
-    public void DoGetList()
-    {
-        if (isWaiting) return;
-        StartCoroutine(callWebSocket());
-    }
-    IEnumerator callWebSocket()
-    {
-        isWaiting = true;
-        yield return new WaitForSeconds(0.5f);
+    // public void DoGetList()
+    // {
+    //     if (isWaiting) return;
+    //     StartCoroutine(callWebSocket());
+    // }
+    // IEnumerator callWebSocket()
+    // {
+    //     isWaiting = true;
+    //     yield return new WaitForSeconds(0.5f);
 
-        // --- SEND COMMAND USING SINGLETON ---
-        WebSocketManager.Instance.SendMessageToServer("list_images");
+    //     // --- SEND COMMAND USING SINGLETON ---
+    //     WebSocketManager.Instance.SendMessageToServer("list_images");
 
-        isWaiting = false;
-    }
+    //     isWaiting = false;
+    // }
 
     public void DoShowAvailableImages()
     {
@@ -246,5 +261,11 @@ public class ImageDownloaderDevice : MonoBehaviour
         {
             infoBoard.DoShowOneMessage(displayText, "Success");
         }
+    }
+
+    public void DoSpawnDownloadedImages()
+    {
+        // --- SEND COMMAND USING SINGLETON ---
+        WebSocketManager.Instance.SendMessageToServer($"list_images");
     }
 }
