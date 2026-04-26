@@ -53,6 +53,7 @@
     <Compile Include="Assets\Scripts\PushBlock.cs" />
     <Compile Include="Assets\TextMesh Pro\Examples &amp; Extras\Scripts\VertexShakeA.cs" />
     <Compile Include="Assets\Scripts\ObjectAbstractBehavior.cs" />
+    <Compile Include="Assets\Scripts\UIPointsAndLevels.cs" />
     <Compile Include="Assets\Scripts\WallJump.cs" />
     <Compile Include="Assets\Scripts\InfoBoard.cs" />
     <Compile Include="Assets\TextMesh Pro\Examples &amp; Extras\Scripts\EnvMapAnimator.cs" />
