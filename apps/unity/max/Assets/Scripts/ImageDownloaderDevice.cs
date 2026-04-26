@@ -22,13 +22,11 @@ public class ImageDownloaderDevice : MonoBehaviour
     [SerializeField] private DirectorWorker orbitBall;
     [SerializeField] private InfoBoard infoBoard;
 
-    private ClientWebSocket webSocket;
     public string selectedImage;
     private int selectedIndex = 0;
     private float timeElapsed = 0.0f;
     private Status status = Status.Idle;
     public static List<string> DockerImages = new();
-    // public static bool hasImages = false;
 
     public class Response
     {
@@ -86,8 +84,6 @@ public class ImageDownloaderDevice : MonoBehaviour
         {
             Debug.LogError("WebSocketManager Singleton is missing from the scene!");
         }
-
-        // DoSpawnDownloadedImages();
     }
 
     private void OnDestroy()
@@ -145,7 +141,7 @@ public class ImageDownloaderDevice : MonoBehaviour
         catch (Exception e)
         {
             // Ignore messages that aren't DockerImage lists (they might be meant for a ChatBox or other object)
-            Debug.Log($"Message was not a DockerImage list: {e.Message}");
+            Debug.Log($"Message was not a DockerImage : {e.Message}");
         }
     }
 
