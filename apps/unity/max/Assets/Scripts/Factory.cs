@@ -40,7 +40,8 @@ public class Factory : MonoBehaviour
         public string type;
         public string status;
         public string message;
-        public Response response;
+        // public Response response;
+        public Response[] response;
     }
 
     private Results results;
@@ -74,6 +75,7 @@ public class Factory : MonoBehaviour
     /// </summary>
     void ReceiveDataFromWebsocket(string message)
     {
+        Debug.Log("----------------" + message);
         try
         {
             // Attempt to parse the message. 
@@ -89,7 +91,7 @@ public class Factory : MonoBehaviour
                     GameObject dockerContainer = spawner.DoSpawn();
                     if (dockerContainer && resourcesIndicators)
                     {
-                        dockerContainer.GetComponent<Container>().containerName = dockerImageName;
+                        // dockerContainer.GetComponent<Container>().containerName = results.response.container_name;
                         dockerContainer.GetComponent<Container>().cpu = resourcesIndicators.cpu;
                         dockerContainer.GetComponent<Container>().ram = resourcesIndicators.ram;
 
@@ -106,6 +108,22 @@ public class Factory : MonoBehaviour
                     infoBoard.DoShowOneMessage(">>> " + results.message, "Danger");
                     isStatusPosted = true;
                     prevState = state;
+                }
+            }
+            else if (results != null && results.type == "container_list")
+            {
+                foreach (Response res in results.response)
+                {
+                    if (spawner)
+                    {
+                        GameObject dockerContainer = spawner.DoSpawn();
+                        if (dockerContainer)
+                        {
+                            dockerContainer.GetComponent<Container>().containerName = res.container_name;
+                            Debug.Log(res.container_status);
+                            state = States.Output;
+                        }
+                    }
                 }
             }
         }
@@ -210,7 +228,7 @@ public class Factory : MonoBehaviour
             if (conveyBelt)
             {
                 conveyBelt.isOn = true;
-                conveyBelt.targetSpeed = new Vector2(-1.5f, 0f);
+                conveyBelt.targetSpeed = new Vector2(-1f, 0f);
             }
         }
 
@@ -229,7 +247,7 @@ public class Factory : MonoBehaviour
                     {
                         safeImageName = safeImageName.Substring(0, colonIndex);
                     }
-                    Debug.Log("image name: " + dockerImageName + ">>" + safeImageName);
+                    Debug.Log(dockerImageName + safeImageName);
                     // --- SEND COMMAND USING SINGLETON ---
                     WebSocketManager.Instance.SendMessageToServer($"create_container:{safeImageName}:{resourcesIndicators.cpu}:{resourcesIndicators.ram}");
                 }
@@ -268,7 +286,7 @@ public class Factory : MonoBehaviour
             if (conveyBelt)
             {
                 conveyBelt.isOn = true;
-                conveyBelt.targetSpeed = new Vector2(1.5f, 0f);
+                conveyBelt.targetSpeed = new Vector2(1f, 0f);
             }
         }
     }
@@ -295,5 +313,11 @@ public class Factory : MonoBehaviour
         bpos.x += transform.position.x;
         bpos.y += transform.position.y;
         Gizmos.DrawWireCube(bpos, collisionCubeSize);
+    }
+
+    public void DoSpawnCreatedContainers()
+    {
+        // --- SEND COMMAND USING SINGLETON ---
+        WebSocketManager.Instance.SendMessageToServer($"list_containers");
     }
 }

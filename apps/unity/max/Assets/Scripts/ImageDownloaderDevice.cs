@@ -21,6 +21,9 @@ public class ImageDownloaderDevice : MonoBehaviour
     [SerializeField] private ObjectSpawner spawner;
     [SerializeField] private DirectorWorker orbitBall;
     [SerializeField] private InfoBoard infoBoard;
+    [SerializeField] private UIPointsAndLevels uIPointsAndLevels;
+    private bool isXPPointGiven = false;
+    private bool isHintShown = false;
 
     public string selectedImage;
     private int selectedIndex = 0;
@@ -38,7 +41,6 @@ public class ImageDownloaderDevice : MonoBehaviour
         public string type;
         public string status;
         public string image;
-        public string detail;
         public string message;
         public Response[] response;
     }
@@ -121,6 +123,12 @@ public class ImageDownloaderDevice : MonoBehaviour
                 {
                     status = Status.Failed;
                     screenText.text = results.message;
+
+                    // show hint
+                    if (uIPointsAndLevels.hintBoard)
+                    {
+                        uIPointsAndLevels.hintBoard.DoShowOneMessage("Oops!, " + results.message, "Danger");
+                    }
                 }
             }
             else if (results != null && results.type == "image_list")
@@ -180,6 +188,25 @@ public class ImageDownloaderDevice : MonoBehaviour
                 orbitBall.DoRunAnimation("0");
             }
             timeElapsed = 0f;
+
+            // add points/XP
+            if (uIPointsAndLevels)
+            {
+                uIPointsAndLevels.DoAddPoints("1000");
+            }
+
+            // show hint
+            if (uIPointsAndLevels.hintBoard && !isHintShown)
+            {
+                isHintShown = true;
+                uIPointsAndLevels.hintBoard.DoRemoveItem("0");
+                uIPointsAndLevels.hintBoard.DoAddToList("Excellent! you've downloaded the image. the docker command is: docker pull [imagename]", "5");
+                uIPointsAndLevels.hintBoard.DoAddToList("Mission 3.1: push the image box to the right to drop down...", "100");
+            }
+        }
+        if (status == Status.Failed)
+        {
+            status = Status.Idle;
         }
     }
 
@@ -256,6 +283,20 @@ public class ImageDownloaderDevice : MonoBehaviour
         if (infoBoard)
         {
             infoBoard.DoShowOneMessage(displayText, "Success");
+        }
+
+        // add points/XP
+        if (uIPointsAndLevels)
+        {
+            if (!isXPPointGiven)
+            {
+                isXPPointGiven = true;
+                uIPointsAndLevels.DoAddPoints("100");
+                if (uIPointsAndLevels.hintBoard)
+                {
+                    uIPointsAndLevels.hintBoard.DoShowOneMessage("Mission 2.1: climb down the ladder one level and go to the right...", "Info");
+                }
+            }
         }
     }
 
