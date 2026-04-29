@@ -47,7 +47,8 @@ def get_container_stats(container_name):
 
 async def create_container(ws, client_id, image_name, cpus, memory):
     try:
-        container_name = image_name.split("/")[1]
+        container_name = image_name.split(":")[0].split("/")[0]
+        print("in create container")
         obj = client.containers.create(
             name=container_name + "_container",
             image=image_name,
@@ -56,6 +57,7 @@ async def create_container(ws, client_id, image_name, cpus, memory):
             cpu_count=cpus,
             mem_limit=str(memory) + "m"
         )
+        print(obj)
         log.info("Container created", extra={"client_id": client_id, "container": obj.name})
         await ws.send(json.dumps({"type": "create_container", "response": {
             "container_name": obj.name,
@@ -123,20 +125,20 @@ async def get_container_list(ws, client_id):
     try:
         containers = client.containers.list(all=True)
         container_list = [{"container_id": c.id, "container_name": c.name, "container_status": c.status} for c in containers]
-        await ws.send(json.dumps({"type": "container_list","status":"ok", "response": container_list}))
+        await ws.send(json.dumps({"type": "container_list","status":"ok", "List": container_list}))
     except Exception as e:
         log.error("get container failed", extra={"client_id": client_id, "image": image_name, "error": str(e)})
-        await ws.send(json.dumps({"type": "container_list", "status": "failed", "message": str(e)}))
+        await ws.send(json.dumps({"type": "container_list", "status": "failed","List": [], "message": str(e)}))
 
 
 async def get_image_list(ws, client_id):
     try:
         images = client.images.list(all=True)
         image_list = [{"image_id": i.id, "image_name": i.tags[0]} for i in images]
-        await ws.send(json.dumps({"type": "image_list","status":"ok", "response": image_list}))
+        await ws.send(json.dumps({"type": "image_list","status":"ok", "List": image_list,"message":"image lists"}))
     except Exception as e:
         log.error("get image list", extra={"client_id": client_id, "image": image_name, "error": str(e)})
-        await ws.send(json.dumps({"type": "image_list", "status": "failed", "message": str(e)}))
+        await ws.send(json.dumps({"type": "image_list", "status": "failed","List": [], "message": str(e)}))
 
 
 # ---- IMAGE PULL ---- #
@@ -149,7 +151,7 @@ def pull_image_thread(websocket, client_id, image_name, done_event):
                 print(image_name)
                 print(image.tags[0].split(":")[0])
                 asyncio.run_coroutine_threadsafe(
-                    websocket.send(json.dumps({"status": "failed", "message": f"{image_name} is already present"})),
+                    websocket.send(json.dumps({"type": "image_pull","status": "failed", "message": f"{image_name} is already present"})),
                     MAIN_LOOP
                 )
                 return
@@ -163,7 +165,7 @@ def pull_image_thread(websocket, client_id, image_name, done_event):
                 msg = line.get("error") or line["errorDetail"]["message"]
                 log.error("Image pull failed", extra={"client_id": client_id, "image": image_name, "error": msg})
                 asyncio.run_coroutine_threadsafe(
-                    websocket.send(json.dumps({"status": "failed", "message": msg})),
+                    websocket.send(json.dumps({"type": "image_pull","status": "failed", "message": msg})),
                     MAIN_LOOP
                 )
                 return
@@ -174,20 +176,20 @@ def pull_image_thread(websocket, client_id, image_name, done_event):
 
             if current_message != last_status:
                 asyncio.run_coroutine_threadsafe(
-                    websocket.send(json.dumps({"type": "image_pull","status": "pulling", "image": image_name, "detail": current_message})),
+                    websocket.send(json.dumps({"type": "image_pull","status": "pulling", "image": image_name, "message": current_message})),
                     MAIN_LOOP
                 )
                 last_status = current_message
 
         log.info("Image pulled", extra={"client_id": client_id, "image": image_name})
         asyncio.run_coroutine_threadsafe(
-            websocket.send(json.dumps({"status": "ok", "image": image_name, "rss": [ram, cpu]})),
+            websocket.send(json.dumps({"type": "image_pull","status": "ok", "image": image_name, "rss": [ram, cpu]})),
             MAIN_LOOP
         )
     except Exception as e:
         log.error("Image pull exception", extra={"client_id": client_id, "image": image_name, "error": str(e)})
         asyncio.run_coroutine_threadsafe(
-            websocket.send(json.dumps({"status": "failed", "message": str(e)})),
+            websocket.send(json.dumps({"type": "image_pull","status": "failed", "message": str(e)})),
             MAIN_LOOP
         )
     finally:
@@ -227,7 +229,10 @@ async def handler(websocket):
 
             elif message.startswith("create_container:"):
                 chunks = message.split(":")
-                tasks.append(asyncio.create_task(create_container(websocket, client_id, chunks[1], int(chunks[2]), chunks[3])))
+                if len(chunks) == 5:
+                    tasks.append(asyncio.create_task(create_container(websocket, client_id, chunks[1]+":"+chunks[2], int(chunks[3]), chunks[4])))
+                elif len(chunks) == 4:
+                    tasks.append(asyncio.create_task(create_container(websocket, client_id, chunks[1], int(chunks[2]), chunks[3])))
 
             elif message.startswith("start_container:"):
                 tasks.append(asyncio.create_task(start_container(websocket, client_id, message.split(":")[1])))
