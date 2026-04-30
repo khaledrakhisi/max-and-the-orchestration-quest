@@ -1,17 +1,20 @@
 from datetime import datetime
-from typing import Optional, Annotated
+from typing import Optional, Annotated, Literal
+
 from pydantic import BaseModel, Field, ConfigDict, BeforeValidator
 
 
 PyObjectId = Annotated[str, BeforeValidator(str)]
+BadgeStatus = Literal["not_achieved", "achieved"]
 
-class User(BaseModel):
+
+class Badge(BaseModel):
     id: Optional[PyObjectId] = Field(alias="_id", default=None)
-    username: str
-    email: str
-    password: str
-    totalXP: int = 0
-    level: int = 1
-    createdAt: datetime = Field(default_factory=datetime.utcnow)
+    userId: PyObjectId
+    badgeId: str
+    badgeName: str
+    status: BadgeStatus = "not_achieved"
+    achievedAt: Optional[datetime] = None
+    badgeXP: int = 0
 
     model_config = ConfigDict(populate_by_name=True, arbitrary_types_allowed=True)

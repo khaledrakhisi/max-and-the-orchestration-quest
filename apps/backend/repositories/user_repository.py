@@ -1,7 +1,7 @@
 from typing import List, Optional, Dict, Any
 from pymongo import MongoClient, ReturnDocument
 from bson import ObjectId
-from models.user import User, Badge
+from models.user import User
 
 
 class UserRepository:
@@ -40,36 +40,7 @@ class UserRepository:
         user.id = str(result.inserted_id)
         return user
 
-    # -------------------------
-    # UPDATE
-    # -------------------------
-
-    def add_badge(self, user_id: str, badge: Badge) -> bool:
-        result = self.collection.update_one(
-            {"_id": ObjectId(user_id)},
-            {"$push": {"badges": badge.model_dump()}}
-        )
-        return result.modified_count == 1
-
-    def add_xp(self, user_id: str, xp: int) -> bool:
-        result = self.collection.update_one(
-            {"_id": ObjectId(user_id)},
-            {
-                "$inc": {"totalXP": xp},
-                "$set": {"level": self._calculate_level(xp)}
-            }
-        )
-        return result.modified_count == 1
-
-    def change_password(self, user_id: str, new_password: str) -> bool:
-        result = self.collection.update_one(
-            {"_id": ObjectId(user_id)},
-            {"$set": {"password": new_password}}
-        )
-        return result.modified_count == 1
-
     def _calculate_level(self, xp: int) -> int:
-        # Example leveling logic
         return max(1, xp // 1000)
 
     def update_user(self, user_id: str, updates: Dict[str, Any]) -> Optional[User]:

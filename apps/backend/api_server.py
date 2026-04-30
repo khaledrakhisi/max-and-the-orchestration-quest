@@ -4,10 +4,13 @@ from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel, EmailStr, Field
 from datetime import timedelta, datetime
 from repositories.user_repository import UserRepository
+from repositories.badge_repository import BadgeRepository
 from repositories.mission_repository import MissionRepository
 from domain.authentication import hash_password, verify_password, create_access_token, normalize_password
+from domain.badges import BadgeDomain
 from domain.missions import MissionDomain
 from models.user import User
+from models.badge import BadgeStatus
 from models.mission import MissionStatus
 from bson.errors import InvalidId
 import os
@@ -39,7 +42,9 @@ app.add_middleware(
 
 # Initialize repository
 user_repo = UserRepository(CONNECTION_STRING, DATABASE_NAME)
+badge_repo = BadgeRepository(CONNECTION_STRING, DATABASE_NAME)
 mission_repo = MissionRepository(CONNECTION_STRING, DATABASE_NAME)
+badge_domain = BadgeDomain(badge_repo, user_repo, primary_user_id=PRIMARY_USER_ID)
 mission_domain = MissionDomain(mission_repo, user_repo, primary_user_id=PRIMARY_USER_ID)
 
 
@@ -85,6 +90,21 @@ class UserUpdateRequest(BaseModel):
     level: int | None = None
 
 
+class BadgeResponse(BaseModel):
+    id: str
+    userId: str
+    badgeId: str
+    badgeName: str
+    status: BadgeStatus
+    achievedAt: datetime | None = None
+    badgeXP: int = 0
+
+
+class BadgeAchieveResponse(BaseModel):
+    badge: BadgeResponse
+    userTotalXP: int
+
+
 class MissionResponse(BaseModel):
     id: str
     userId: str
@@ -99,6 +119,28 @@ class MissionResponse(BaseModel):
 class MissionCompleteResponse(BaseModel):
     mission: MissionResponse
     userTotalXP: int
+
+
+def _serialize_user(user) -> dict:
+    return {
+        "id": str(user.id),
+        "username": user.username,
+        "email": user.email,
+        "totalXP": user.totalXP,
+        "level": user.level,
+    }
+
+
+def _serialize_badge(badge) -> dict:
+    return {
+        "id": str(badge.id),
+        "userId": str(badge.userId),
+        "badgeId": badge.badgeId,
+        "badgeName": badge.badgeName,
+        "status": badge.status,
+        "achievedAt": badge.achievedAt,
+        "badgeXP": badge.badgeXP,
+    }
 
 
 def _serialize_mission(mission) -> dict:
@@ -187,13 +229,7 @@ async def register(request: RegisterRequest):
     return {
         "access_token": access_token,
         "token_type": "bearer",
-        "user": {
-            "id": str(created_user.id),
-            "username": created_user.username,
-            "email": created_user.email,
-            "totalXP": created_user.totalXP,
-            "level": created_user.level
-        }
+        "user": _serialize_user(created_user)
     }
 
 
@@ -235,29 +271,14 @@ async def login(request: LoginRequest):
     return {
         "access_token": access_token,
         "token_type": "bearer",
-        "user": {
-            "id": str(user.id),
-            "username": user.username,
-            "email": user.email,
-            "totalXP": user.totalXP,
-            "level": user.level
-        }
+        "user": _serialize_user(user)
     }
 
 
 @app.get("/users", response_model=list[UserResponse])
 async def list_users():
     users = user_repo.get_all()
-    return [
-        {
-            "id": str(user.id),
-            "username": user.username,
-            "email": user.email,
-            "totalXP": user.totalXP,
-            "level": user.level,
-        }
-        for user in users
-    ]
+    return [_serialize_user(user) for user in users]
 
 
 @app.get("/user", response_model=UserResponse)
@@ -266,13 +287,7 @@ async def get_primary_user():
     if not user:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Primary user not found")
 
-    return {
-        "id": str(user.id),
-        "username": user.username,
-        "email": user.email,
-        "totalXP": user.totalXP,
-        "level": user.level,
-    }
+    return _serialize_user(user)
 
 
 @app.get("/users/{user_id}", response_model=UserResponse)
@@ -285,13 +300,7 @@ async def get_user(user_id: str):
     if not user:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="User not found")
 
-    return {
-        "id": str(user.id),
-        "username": user.username,
-        "email": user.email,
-        "totalXP": user.totalXP,
-        "level": user.level,
-    }
+    return _serialize_user(user)
 
 
 @app.post("/users", response_model=UserResponse, status_code=status.HTTP_201_CREATED)
@@ -317,13 +326,7 @@ async def create_user(request: UserCreateRequest):
 
     created_user = user_repo.insert(new_user)
 
-    return {
-        "id": str(created_user.id),
-        "username": created_user.username,
-        "email": created_user.email,
-        "totalXP": created_user.totalXP,
-        "level": created_user.level,
-    }
+    return _serialize_user(created_user)
 
 
 @app.patch("/users/{user_id}", response_model=UserResponse)
@@ -352,13 +355,7 @@ async def update_user(user_id: str, request: UserUpdateRequest):
     if not updated_user:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="User not found")
 
-    return {
-        "id": str(updated_user.id),
-        "username": updated_user.username,
-        "email": updated_user.email,
-        "totalXP": updated_user.totalXP,
-        "level": updated_user.level,
-    }
+    return _serialize_user(updated_user)
 
 
 @app.delete("/users/{user_id}", status_code=status.HTTP_204_NO_CONTENT)
@@ -372,6 +369,29 @@ async def delete_user(user_id: str):
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="User not found")
 
     return None
+
+
+@app.get("/badges", response_model=list[BadgeResponse])
+async def list_badges():
+    badges = badge_domain.get_all_badges()
+    return [_serialize_badge(badge) for badge in badges]
+
+
+@app.post("/badges/{badge_id}/achieve", response_model=BadgeAchieveResponse)
+async def achieve_badge(badge_id: str):
+    try:
+        achieved_badge, user_total_xp = badge_domain.achieve_badge(badge_id)
+    except ValueError as exc:
+        message = str(exc)
+        status_code = status.HTTP_404_NOT_FOUND if "not found" in message.lower() else status.HTTP_400_BAD_REQUEST
+        raise HTTPException(status_code=status_code, detail=message)
+    except RuntimeError as exc:
+        raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail=str(exc))
+
+    return {
+        "badge": _serialize_badge(achieved_badge),
+        "userTotalXP": user_total_xp,
+    }
 
 
 @app.get("/missions", response_model=list[MissionResponse])

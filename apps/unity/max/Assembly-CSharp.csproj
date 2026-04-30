@@ -65,6 +65,7 @@
     <Compile Include="Assets\Scripts\Keypad_Knob.cs" />
     <Compile Include="Assets\TextMesh Pro\Examples &amp; Extras\Scripts\Benchmark01_UGUI.cs" />
     <Compile Include="Assets\TextMesh Pro\Examples &amp; Extras\Scripts\SimpleScript.cs" />
+    <Compile Include="Assets\Scripts\ApiClient.cs" />
     <Compile Include="Assets\Raving Bots\Scripts\Water2D\Water2DEffects.cs" />
     <Compile Include="Assets\TextMesh Pro\Examples &amp; Extras\Scripts\Benchmark04.cs" />
     <Compile Include="Assets\Scripts\PlayerPhysics.cs" />

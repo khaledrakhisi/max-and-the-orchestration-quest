@@ -41,9 +41,9 @@ public class Factory : MonoBehaviour
         public string status;
         public string message;
         // public Response response;
-        public Response[] response;
+        public Response response;
+        public Response[] list;
     }
-
     private Results results;
 
     // Start is called once before the first execution of Update after the MonoBehaviour is created
@@ -75,7 +75,6 @@ public class Factory : MonoBehaviour
     /// </summary>
     void ReceiveDataFromWebsocket(string message)
     {
-        Debug.Log("----------------" + message);
         try
         {
             // Attempt to parse the message. 
@@ -112,7 +111,7 @@ public class Factory : MonoBehaviour
             }
             else if (results != null && results.type == "container_list")
             {
-                foreach (Response res in results.response)
+                foreach (Response res in results.list)
                 {
                     if (spawner)
                     {
@@ -248,6 +247,7 @@ public class Factory : MonoBehaviour
                         safeImageName = safeImageName.Substring(0, colonIndex);
                     }
                     Debug.Log(dockerImageName + safeImageName);
+
                     // --- SEND COMMAND USING SINGLETON ---
                     WebSocketManager.Instance.SendMessageToServer($"create_container:{safeImageName}:{resourcesIndicators.cpu}:{resourcesIndicators.ram}");
                 }

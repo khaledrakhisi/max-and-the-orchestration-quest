@@ -42,7 +42,7 @@ public class ImageDownloaderDevice : MonoBehaviour
         public string status;
         public string image;
         public string message;
-        public Response[] response;
+        public Response[] list;
     }
 
     public Results results;
@@ -133,7 +133,7 @@ public class ImageDownloaderDevice : MonoBehaviour
             }
             else if (results != null && results.type == "image_list")
             {
-                foreach (Response res in results.response)
+                foreach (Response res in results.list)
                 {
                     if (spawner)
                     {

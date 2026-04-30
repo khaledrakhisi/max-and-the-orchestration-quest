@@ -15,6 +15,7 @@ public class ServerMachine : MonoBehaviour
     [SerializeField] private InfoBoard infoBoard;
     [SerializeField] private MoveToPoint serverDoor;
     [SerializeField] private Rotate2D fan1, fan2;
+    [SerializeField] private UIPointsAndLevels uIPointsAndLevels;
     private float timeElapsed = 0f;
     private Statuses status = Statuses.Idle;
 
@@ -75,6 +76,9 @@ public class ServerMachine : MonoBehaviour
                     DoDockContainer();
                     DirectorWorker dw = containerObject.GetComponent<DirectorWorker>();
                     if (dw) dw.DoDistroyObject();
+
+                    uIPointsAndLevels.hintBoard.DoShowOneMessage("Well Done! You have ran the first container, one level is completed", "Success");
+                    uIPointsAndLevels.DoSetLevel("2");
                 }
                 else if (results.status == "failed")
                 {
