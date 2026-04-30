@@ -1,6 +1,16 @@
 import React, { useState, useEffect, useRef } from 'react';
-import './index.css';
+import './index'
 import backgroundMusic from './assets/Galactic_Gauntlet.mp3';
+
+declare global {
+  interface Window {
+    electronAPI?: {
+      launchGame: (levelId: number) => void;
+      stopGame: () => void;
+      onUnityClosed: (callback: () => void) => void;
+    };
+  }
+}
 
 type ViewState = 'MENU' | 'GAME' | 'LEVEL_SELECT' | 'OPTIONS' | 'LEADERBOARDS';
 
@@ -9,6 +19,16 @@ function App() {
   const [volume, setVolume] = useState<number>(0.5);
   const [isMuted, setIsMuted] = useState<boolean>(false);
   const audioRef = useRef<HTMLAudioElement>(null);
+
+  // Listen for Unity closing to return to menu
+  useEffect(() => {
+    if (window.electronAPI) {
+      window.electronAPI.onUnityClosed(() => {
+        console.log("Unity closed, returning to menu...");
+        setCurrentView('MENU');
+      });
+    }
+  }, []);
 
   useEffect(() => {
     if (audioRef.current) {
@@ -44,6 +64,8 @@ function App() {
             audioRef.current.pause();
           }
           setCurrentView('GAME');
+          // Tell Electron to launch the .exe (Default to level 1)
+          if (window.electronAPI) window.electronAPI.launchGame(1);
         }}>
           START GAME
         </button>
