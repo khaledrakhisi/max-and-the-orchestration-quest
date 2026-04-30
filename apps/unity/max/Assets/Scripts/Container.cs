@@ -1,4 +1,5 @@
 using System;
+using TMPro;
 using UnityEngine;
 
 public class Container : MonoBehaviour
@@ -10,6 +11,7 @@ public class Container : MonoBehaviour
     private SevenSegment cpu7seg;
     [SerializeField]
     private SevenSegment ram7seg;
+    [SerializeField] private TextMeshProUGUI labelText;
     // Start is called once before the first execution of Update after the MonoBehaviour is created
     void Start()
     {
@@ -27,6 +29,13 @@ public class Container : MonoBehaviour
         {
             ram7seg.displayValue = ram;
         }
+    }
+
+    public void DoSetName(string name)
+    {
+        containerName = name;
+        if (labelText)
+            labelText.text = name;
     }
 
     // public void DoAdd(string component, string value)

@@ -1,4 +1,5 @@
 using System;
+using System.Linq;
 using Newtonsoft.Json;
 using UnityEngine;
 
@@ -27,6 +28,8 @@ public class Factory : MonoBehaviour
     [SerializeField] private ResourcesIndicators resourcesIndicators;
     [SerializeField] private ObjectSpawner spawner;
     [SerializeField] private MoveToPoint fence;
+    [SerializeField] private UIPointsAndLevels uIPointsAndLevels;
+    private bool isHintShown = false;
     private bool isStatusPosted = false;
 
     public class Response
@@ -91,6 +94,7 @@ public class Factory : MonoBehaviour
                     if (dockerContainer && resourcesIndicators)
                     {
                         // dockerContainer.GetComponent<Container>().containerName = results.response.container_name;
+                        dockerContainer.GetComponent<Container>().DoSetName(results.response.container_name);
                         dockerContainer.GetComponent<Container>().cpu = resourcesIndicators.cpu;
                         dockerContainer.GetComponent<Container>().ram = resourcesIndicators.ram;
 
@@ -100,6 +104,24 @@ public class Factory : MonoBehaviour
 
                         resourcesIndicators.cpu = 0;
                         resourcesIndicators.ram = 0;
+
+                        // add points/XP
+                        if (uIPointsAndLevels)
+                        {
+                            uIPointsAndLevels.DoAddPoints("2000");
+                        }
+                        // show hint
+                        if (uIPointsAndLevels.hintBoard && !isHintShown)
+                        {
+                            isHintShown = true;
+                            uIPointsAndLevels.hintBoard.DoShowOneMessage("Mission 4.1: Well Done! Now push the container to left to the eleveator...", "Success");
+                        }
+
+                        // add points/XP
+                        if (uIPointsAndLevels)
+                        {
+                            uIPointsAndLevels.DoAddPoints("1500");
+                        }
                     }
                 }
                 else if (results.status == "failed")
@@ -107,6 +129,12 @@ public class Factory : MonoBehaviour
                     infoBoard.DoShowOneMessage(">>> " + results.message, "Danger");
                     isStatusPosted = true;
                     prevState = state;
+
+                    // show hint
+                    if (uIPointsAndLevels.hintBoard)
+                    {
+                        uIPointsAndLevels.hintBoard.DoShowOneMessage("Oops!, " + results.message, "Danger");
+                    }
                 }
             }
             else if (results != null && results.type == "container_list")
@@ -118,8 +146,7 @@ public class Factory : MonoBehaviour
                         GameObject dockerContainer = spawner.DoSpawn();
                         if (dockerContainer)
                         {
-                            dockerContainer.GetComponent<Container>().containerName = res.container_name;
-                            Debug.Log(res.container_status);
+                            dockerContainer.GetComponent<Container>().DoSetName(res.container_name);
                             state = States.Output;
                         }
                     }
@@ -129,7 +156,7 @@ public class Factory : MonoBehaviour
         catch (Exception e)
         {
             // Ignore messages that aren't DockerImage lists (they might be meant for a ChatBox or other object)
-            Debug.Log($"Message was not a DockerImage list: {e.Message}");
+            Debug.Log($"Error: {e.Message}");
         }
     }
     // Update is called once per frame
@@ -194,12 +221,6 @@ public class Factory : MonoBehaviour
                         DoResetFactory();
                         return;
                     }
-                }
-                else
-                {
-                    infoBoard.DoShowOneMessage(">>> Error: No resources attached!", "Danger");
-                    DoResetFactory();
-                    return;
                 }
             }
 
