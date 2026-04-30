@@ -8,7 +8,7 @@ console.log("🔥 MAIN PROCESS STARTED");
 // ============================================================
 const PYTHON_SCRIPT_PATH_DOCKER = path.join(__dirname, '../../backend/docker_server.py');
 const PYTHON_SCRIPT_PATH_API = path.join(__dirname, '../../backend/api_server.py');
-const UNITY_EXE_PATH = path.join(__dirname, '../../unity/max/game_file/Paradise.exe');
+const UNITY_EXE_PATH = path.join(__dirname, '../../unity/max/build_file/Max.exe');
 console.log(UNITY_EXE_PATH);
 
 let mainWindow;

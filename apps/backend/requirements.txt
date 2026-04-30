@@ -7,3 +7,6 @@ pymongo>=4.6,<5.0
 dnspython>=2.6,<3.0
 python-jose>=3.3,<4.0
 argon2-cffi>=23.1,<26.0
+websockets
+docker
+
