@@ -1,0 +1,47 @@
+[
+  {
+    "_id": { "$oid": "69384425a8cdbf214cd36b01" },
+    "userId": { "$oid": "693843f9a8cdbf214cd36a62" },
+    "badgeId": "badge-1",
+    "badgeName": "Container Cadet",
+    "status": "not_achieved",
+    "achievedAt": null,
+    "badgeXP": 50
+  },
+  {
+    "_id": { "$oid": "69384425a8cdbf214cd36b02" },
+    "userId": { "$oid": "693843f9a8cdbf214cd36a62" },
+    "badgeId": "badge-2",
+    "badgeName": "Image Architect",
+    "status": "not_achieved",
+    "achievedAt": null,
+    "badgeXP": 100
+  },
+  {
+    "_id": { "$oid": "69384425a8cdbf214cd36b03" },
+    "userId": { "$oid": "693843f9a8cdbf214cd36a62" },
+    "badgeId": "badge-3",
+    "badgeName": "Network Navigator",
+    "status": "not_achieved",
+    "achievedAt": null,
+    "badgeXP": 150
+  },
+  {
+    "_id": { "$oid": "69384425a8cdbf214cd36b04" },
+    "userId": { "$oid": "693843f9a8cdbf214cd36a62" },
+    "badgeId": "badge-4",
+    "badgeName": "Volume Veteran",
+    "status": "not_achieved",
+    "achievedAt": null,
+    "badgeXP": 200
+  },
+  {
+    "_id": { "$oid": "69384425a8cdbf214cd36b05" },
+    "userId": { "$oid": "693843f9a8cdbf214cd36a62" },
+    "badgeId": "badge-5",
+    "badgeName": "Compose Conductor",
+    "status": "not_achieved",
+    "achievedAt": null,
+    "badgeXP": 250
+  }
+]
