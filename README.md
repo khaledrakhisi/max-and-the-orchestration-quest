@@ -1,5 +1,5 @@
 ![Poster](./assets/design/poster.png)
-📺 Max and The Docker Orchestration Quest
+# 📺 Max and The Docker Orchestration Quest
 
 Project Goal: A Serious Game designed to teach fundamental Container Orchestration (Docker) concepts by transforming deployment tasks into a fun, physics-based 2D platformer. The game client (Unity) triggers real Docker commands via a Node.js API.
 
