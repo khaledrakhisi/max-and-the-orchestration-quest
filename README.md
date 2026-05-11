@@ -59,7 +59,7 @@ yarn workspace frontend start
 
 Expected Output: The React application will usually start on http://localhost:3001 (or another available port). This dashboard connects to the API running on port 3000.
 
-🛑 Docker and Unity Setup (Advanced)
+Docker and Unity Setup (Advanced)
 
 Docker / Database Setup
 
@@ -79,7 +79,7 @@ Open the project in Unity Editor (Version 6.1 or higher recommended).
 
 Ensure your C# networking code is configured to send requests to your local backend URL: http://localhost:3000.
 
-🤝 Team Roles
+Team Roles
 
 Khaled & Velvin: Unity (Game Client)
 
