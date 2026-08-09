@@ -81,10 +81,10 @@ Ensure your C# networking code is configured to send requests to your local back
 
 Team Roles
 
-Khaled & Velvin: Unity (Game Client)
+Khaled : Unity (Game Client)
 
 Shiva: Docker
 
-Nafeesa: UI/UX (React Frontend, Assets)
+Velvin: UI/UX (React Frontend)
 
 Joani: Backend (Node.js/TypeScript)
