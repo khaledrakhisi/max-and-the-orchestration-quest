@@ -77,7 +77,7 @@ public class ServerMachine : MonoBehaviour
                     DirectorWorker dw = containerObject.GetComponent<DirectorWorker>();
                     if (dw) dw.DoDistroyObject();
 
-                    uIPointsAndLevels.hintBoard.DoShowOneMessage("Well Done! You have ran the first container, one level is completed", "Success");
+                    uIPointsAndLevels.hintBoard.DoShowOneMessage("Well Done! You have ran the first container, one level is completed, Going to next Level...", "Success");
                     uIPointsAndLevels.DoSetLevel("2");
                 }
                 else if (results.status == "failed")

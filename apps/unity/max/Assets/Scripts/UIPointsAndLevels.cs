@@ -21,7 +21,7 @@ public class UIPointsAndLevels : MonoBehaviour
 
     void OnUserLoaded(User user)
     {
-        Debug.Log("User: " + user.username + " xp: " + user.totalXP + " level" + user.level);
+        // Debug.Log("User: " + user.username + " xp: " + user.totalXP + " level" + user.level);
         if (user != null)
         {
             DoSetLevel(user.level.ToString());

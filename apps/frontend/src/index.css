@@ -17,7 +17,7 @@ body {
   margin: 0;
   padding: 0;
   background-color: var(--retro-bg);
-  background-image: linear-gradient(rgba(26, 28, 44, 0.3), rgba(26, 28, 44, 0.3)), url('./assets/max_orchestration_bg.png');
+  background-image: linear-gradient(rgba(26, 28, 44, 0.3), rgba(26, 28, 44, 0.3)), url('./assets/poster.png');
   background-size: contain;
   background-repeat: no-repeat;
   background-attachment: fixed;

@@ -294,7 +294,7 @@ public class ImageDownloaderDevice : MonoBehaviour
                 uIPointsAndLevels.DoAddPoints("100");
                 if (uIPointsAndLevels.hintBoard)
                 {
-                    uIPointsAndLevels.hintBoard.DoShowOneMessage("Mission 2.1: climb down the ladder one level and go to the right...", "Info");
+                    uIPointsAndLevels.hintBoard.DoShowOneMessage("Mission 2.1: climb down the ladder to floor #2 and go to the right...", "Info");
                 }
             }
         }

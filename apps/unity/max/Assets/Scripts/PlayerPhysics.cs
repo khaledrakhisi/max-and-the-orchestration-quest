@@ -133,8 +133,8 @@ public class PlayerPhysics : AbstractBehavior
 		// die by falling
 		if (collisionState.standing && dieByFallingThreshold > 0 && fallingTimeElapsed >= dieByFallingThreshold && inputState.absVelY <= -dieByFallingVelocity)
 		{
-			isDead = true;
-			dieWay = DieWay.byFalling;
+			// isDead = true;
+			// dieWay = DieWay.byFalling;
 		}
 
 		// passing out by falling
