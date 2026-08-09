@@ -7,6 +7,7 @@ using System.Linq;
 using System.IO;
 using System.Runtime.Serialization.Formatters.Binary;
 using UnityEngine.SceneManagement;
+using System.Globalization;
 
 //[CustomEditor(typeof(Director))]
 //public class DirectorEditor : Editor
@@ -452,7 +453,8 @@ public class Director : MonoBehaviour
 				}
 				else if (pi.PropertyType.ToString().ToLower().Contains("single"))
 				{
-					pi.SetValue(component, float.Parse(thing.memberValueX), null);
+					// pi.SetValue(component, float.Parse(thing.memberValueX), null);
+					pi.SetValue(component, float.Parse(thing.memberValueX, CultureInfo.InvariantCulture), null);
 
 				}
 				else if (pi.PropertyType.ToString().ToLower().Contains("gameobject"))
@@ -510,13 +512,13 @@ public class Director : MonoBehaviour
 		}
 		else if (fi.FieldType.ToString().ToLower().Contains("vector2"))
 		{
-			fi.SetValue(component, new Vector2(float.Parse(value1), float.Parse(value2)));
+			fi.SetValue(component, new Vector2(float.Parse(value1, CultureInfo.InvariantCulture), float.Parse(value2, CultureInfo.InvariantCulture)));
 
 		}
 		else if (fi.FieldType.ToString().ToLower().Contains("vector3"))
 		{
 			//Debug.Log ("here");
-			fi.SetValue(component, new Vector3(float.Parse(value1), float.Parse(value2), 0f));
+			fi.SetValue(component, new Vector3(float.Parse(value1, CultureInfo.InvariantCulture), float.Parse(value2, CultureInfo.InvariantCulture), 0f));
 
 		}
 		else if (fi.FieldType.ToString().ToLower().Contains("int"))
@@ -531,7 +533,7 @@ public class Director : MonoBehaviour
 		}
 		else if (fi.FieldType.ToString().ToLower().Contains("single"))
 		{
-			fi.SetValue(component, float.Parse(value1));
+			fi.SetValue(component, float.Parse(value1, CultureInfo.InvariantCulture));
 
 		}
 		else if (fi.FieldType.ToString().ToLower().Contains("gameobject"))

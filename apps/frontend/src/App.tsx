@@ -1,13 +1,17 @@
 import React, { useState, useEffect, useRef } from 'react';
-import './index'
+import './index.css';
 import backgroundMusic from './assets/Galactic_Gauntlet.mp3';
 
+// Type declaration for the Electron IPC bridge (injected by preload.js)
 declare global {
   interface Window {
-    electronAPI?: {
+    electron?: {
       launchGame: (levelId: number) => void;
       stopGame: () => void;
+      getServiceStatus: () => Promise<{ pythonRunning: boolean; unityRunning: boolean }>;
       onUnityClosed: (callback: () => void) => void;
+      onUnityError: (callback: (message: string) => void) => void;
+      removeAllListeners: (channel: string) => void;
     };
   }
 }
@@ -19,16 +23,6 @@ function App() {
   const [volume, setVolume] = useState<number>(0.5);
   const [isMuted, setIsMuted] = useState<boolean>(false);
   const audioRef = useRef<HTMLAudioElement>(null);
-
-  // Listen for Unity closing to return to menu
-  useEffect(() => {
-    if (window.electronAPI) {
-      window.electronAPI.onUnityClosed(() => {
-        console.log("Unity closed, returning to menu...");
-        setCurrentView('MENU');
-      });
-    }
-  }, []);
 
   useEffect(() => {
     if (audioRef.current) {
@@ -56,17 +50,44 @@ function App() {
     }
   }, [currentView]);
 
+  // Listen for Unity window being closed by the player (Electron only)
+  useEffect(() => {
+    if (window.electron) {
+      window.electron.onUnityClosed(() => {
+        console.log('Unity was closed — returning to menu');
+        setCurrentView('MENU');
+      });
+      window.electron.onUnityError((message) => {
+        console.error('Unity failed to launch:', message);
+        alert(`Unity failed to launch. Make sure the game is built.\n\nError: ${message}`);
+        setCurrentView('MENU');
+      });
+    }
+    return () => {
+      if (window.electron) {
+        window.electron.removeAllListeners('unity-closed');
+        window.electron.removeAllListeners('unity-error');
+      }
+    };
+  }, []);
+
+  // Single launch function used by both Start Game and Level Select
+  const launchGame = (levelId: number) => {
+    if (audioRef.current) {
+      audioRef.current.pause();
+    }
+    if (window.electron) {
+      // Running as Electron desktop app — launch Unity + Python
+      window.electron.launchGame(levelId);
+    }
+    // Always show the game view in React
+    setCurrentView('GAME');
+  };
+
   const renderMenu = () => (
     <div className="main-menu-container">
       <div className="menu-buttons">
-        <button className="retro-btn" onClick={() => {
-          if (audioRef.current) {
-            audioRef.current.pause();
-          }
-          setCurrentView('GAME');
-          // Tell Electron to launch the .exe (Default to level 1)
-          if (window.electronAPI) window.electronAPI.launchGame(1);
-        }}>
+        <button className="retro-btn" onClick={() => launchGame(1)}>
           START GAME
         </button>
         <button className="retro-btn" onClick={() => setCurrentView('LEVEL_SELECT')}>
@@ -84,7 +105,12 @@ function App() {
 
   const renderGameMockup = () => (
     <div className="in-game-container">
-      <button className="retro-btn back-btn" onClick={() => setCurrentView('MENU')}>
+      <button className="retro-btn back-btn" onClick={() => {
+        if (window.electron) {
+          window.electron.stopGame();
+        }
+        setCurrentView('MENU');
+      }}>
         &lt; BACK
       </button>
       <div className="game-mockup">
@@ -100,9 +126,9 @@ function App() {
 
         <div style={{ display: 'flex', gap: '30px', justifyContent: 'center', width: '100%' }}>
           {[
-            { id: 1, name: 'DOCKER SEAS', status: 'UNLOCKED' },
-            { id: 2, name: 'KUBE MOUNTAIN', status: 'LOCKED' },
-            { id: 3, name: 'CLOUD FORTRESS', status: 'LOCKED' },
+            { id: 1, name: 'HOW TO DOCKER', status: 'UNLOCKED' },
+            { id: 2, name: 'KUBE MOUNTAIN', status: 'COMING SOON' },
+            { id: 3, name: 'CLOUD FORTRESS', status: 'COMING SOON' },
           ].map((level) => (
             <div
               key={level.id}
@@ -116,13 +142,13 @@ function App() {
                 justifyContent: 'center',
                 gap: '15px',
                 cursor: level.status === 'UNLOCKED' ? 'pointer' : 'not-allowed',
-                opacity: level.status === 'LOCKED' ? 0.6 : 1,
+                opacity: level.status !== 'UNLOCKED' ? 0.6 : 1,
                 transition: 'transform 0.1s',
                 backgroundColor: level.status === 'UNLOCKED' ? '#222' : 'var(--retro-black)'
               }}
               onClick={() => {
                 if (level.status === 'UNLOCKED') {
-                  setCurrentView('GAME');
+                  launchGame(level.id);
                 }
               }}
             >

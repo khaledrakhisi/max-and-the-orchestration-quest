@@ -2,7 +2,7 @@ const { app, BrowserWindow, ipcMain } = require("electron");
 const path = require("path");
 const { spawn } = require("child_process");
 
-console.log("MAIN PROCESS STARTED");
+console.log("🔥 MAIN PROCESS STARTED");
 // ============================================================
 // PATHS — Update UNITY_EXE_PATH once you have a Unity build
 // ============================================================
@@ -16,7 +16,7 @@ const PYTHON_SCRIPT_PATH_API = path.join(
 );
 const UNITY_EXE_PATH = path.join(
   __dirname,
-  "../../build/MaxAndDockerOrchestration.exe",
+  "../../../../build/MaxAndDockerOrchestration.exe",
 );
 console.log(UNITY_EXE_PATH);
 

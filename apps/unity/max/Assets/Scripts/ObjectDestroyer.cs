@@ -14,10 +14,8 @@ public class ObjectDestroyer : MonoBehaviour
 		Container
 	}
 	private bool dockerCommandTriggered = false;
-
 	public LayerMask Layer;
 	public Vector3 collisionCubeSize;
-
 	private Collider2D target;
 	private Color debugCollisionColor = Color.red;
 
@@ -94,23 +92,31 @@ public class ObjectDestroyer : MonoBehaviour
 
 		if (target)
 		{
-			if (!dockerCommandTriggered)
+			if (target.CompareTag("Player"))
 			{
-				string dockerComponentPhysicalName = "";
-				dockerCommandTriggered = true;
-				if (dockerObjectType == DockerObjectType.Image)
+				target.GetComponent<PlayerPhysics>().isDead = true;
+				// Destroy(target.gameObject);
+			}
+			else
+			{
+				if (!dockerCommandTriggered)
 				{
-					dockerComponentPhysicalName = target.gameObject.GetComponent<DockerImage>().imageName;
+					string dockerComponentPhysicalName = "";
+					dockerCommandTriggered = true;
+					if (dockerObjectType == DockerObjectType.Image)
+					{
+						dockerComponentPhysicalName = target.gameObject.GetComponent<DockerImage>().imageName;
 
-					// --- SEND COMMAND USING SINGLETON ---
-					WebSocketManager.Instance.SendMessageToServer($"remove_image:{dockerComponentPhysicalName}");
-				}
-				else if (dockerObjectType == DockerObjectType.Container)
-				{
-					dockerComponentPhysicalName = target.gameObject.GetComponent<Container>().containerName;
+						// --- SEND COMMAND USING SINGLETON ---
+						WebSocketManager.Instance.SendMessageToServer($"remove_image:{dockerComponentPhysicalName}");
+					}
+					else if (dockerObjectType == DockerObjectType.Container)
+					{
+						dockerComponentPhysicalName = target.gameObject.GetComponent<Container>().containerName;
 
-					// --- SEND COMMAND USING SINGLETON ---
-					WebSocketManager.Instance.SendMessageToServer($"remove_container:{dockerComponentPhysicalName}");
+						// --- SEND COMMAND USING SINGLETON ---
+						WebSocketManager.Instance.SendMessageToServer($"remove_container:{dockerComponentPhysicalName}");
+					}
 				}
 			}
 		}
